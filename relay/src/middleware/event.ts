@@ -16,5 +16,7 @@ export const writeRelay = (payload: BroadcastType, res: Response) => {
   const data = `data: ${JSON.stringify(payload.payload)}\n`
   const id = payload.id ? `id: ${payload.id}\n` : ''
     
+  console.log('Relaying', { event, data, id })
+
   res.write(`${event}${data}${id}\n`)
 }

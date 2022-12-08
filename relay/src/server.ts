@@ -30,17 +30,17 @@ async function run() {
   //   console.log(`Running relay server on port ${APP_PORT}`)
   // })
 
-  https.createServer(certificate, app).listen(APP_PORT, () => {
-    console.log(`Running relay server on port ${APP_PORT}`)
-  })
+  app.listen(APP_PORT, () => console.log(`Running relay server on port ${APP_PORT}`))
 
   app.get('/client/join', (req, res) => {
     const userId = nanoid(10)
+    console.log(`Client joining, assigned id: ${userId}`)
 
     return res.status(200).send(userId)
   })
 
   app.post('/client/broadcast', (req: Request<never, unknown, BroadcastType>, res) => {
+    console.log(`Broadcasting client message to server`)
     const { body } = req
 
     emitter.emit('clientRelay', body)
@@ -48,6 +48,7 @@ async function run() {
   })
 
   app.post('/server/broadcast', (req: Request<never, unknown, BroadcastType>, res) => {
+    console.log(`Broadcasting server message to clients`)
     const { body } = req
 
     emitter.emit('serverRelay', body)
