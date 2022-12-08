@@ -1,50 +1,71 @@
-import { useEffect, useState } from 'preact/hooks'
-import { RTCConnector } from '../lib/rtc-connector'
+import { useEffect, useRef, useState } from 'preact/hooks'
+import { JSXInternal } from 'preact/src/jsx'
+import { useMediaStream } from '../hooks/useMediaStream'
+import { useRTC } from '../hooks/useRTC'
+import { MediaSelector } from './MediaSelector'
 
 export const RTC = () => {
   const [relayUrl, setRelayUrl] = useState<string>('')
-  const [deviceList, setDeviceList] = useState<MediaDeviceInfo[]>([])
-  const [videoDevice, setVideoDevice] = useState<string | undefined>()
-  const [connector, setConnector] = useState<RTCConnector | undefined>()
+  const [videoDevice, setVideoDevice] = useState<MediaDeviceInfo>()
+
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  const { deviceList, stream, changeStream, status: mediaStreamStatus } = useMediaStream()
+  const rtc = useRTC()
 
   useEffect(() => {
-    const fetchDevices = async () => {
-      const devices = await navigator.mediaDevices.enumerateDevices()
-
-      setDeviceList(devices)
+    if (videoRef.current) {
+      videoRef.current.srcObject = stream ?? null
     }
 
-    fetchDevices()
-  }, [])
+    if (stream && rtc.connectionState === 'connected') {
+      rtc.addOrReplaceTrack(stream)
+    }
+  }, [stream])
 
   const handleJoin = async () => {
-    console.log('Attempting to join!', { relayUrl, videoDevice })
-
-    setConnector(await RTCConnector.initialize(relayUrl, videoDevice))
+    await rtc.initialize(relayUrl)
   }
 
   const addTrack = () => {
-    if (!connector) return
+    if (!stream) {
+      console.error(`No stream available`)
+      return
+    }
 
-    connector.assignMedia(videoDevice)
+    rtc.addOrReplaceTrack(stream)
+  }
+
+  const renderStatus = () => (
+    <div>
+      {Boolean(rtc.sessionId) && <><br /><div>ID: {rtc.sessionId}</div><br /></>}
+      <div>Media: {videoDevice?.label} / {mediaStreamStatus}</div>
+      <div>Status: {rtc.connectionState}</div>
+    </div>
+  )
+
+  const handleMediaChange = async (ev: JSXInternal.TargetedEvent<HTMLSelectElement, Event>) => {
+    const id = ev.currentTarget.value
+    const device = deviceList.find(d => d.deviceId === id)
+
+    setVideoDevice(device)
+    await changeStream(id)
   }
 
   return (
     <>
-      <input type="text" value={relayUrl} onChange={(e) => setRelayUrl(e.currentTarget.value)} />
-      <select value={videoDevice} onChange={(e) => setVideoDevice(e.currentTarget.value)}>
-        {deviceList.map(device => {
-          return (
-            <option value={device.deviceId}>{device.label}</option>
-          )
-        })}
-      </select>
-      <button type="button" onClick={handleJoin}>Join</button>
-      <button type="button" onClick={addTrack} disabled={!connector}>Add track</button>
-      <br />
-      ID: {connector?.sessionId}
-      <br />
-      Status: {connector?.pc.connectionState}
+      <div>
+        {stream && <video ref={videoRef} autoPlay />}
+      </div>
+      <div>
+        <input type="text" value={relayUrl} onInput={(e) => setRelayUrl(e.currentTarget.value)} />
+        <MediaSelector onChange={handleMediaChange} selectedDeviceId={videoDevice?.deviceId} deviceList={deviceList} />
+      </div>
+      <div>
+        <button type="button" onClick={handleJoin}>Join</button>
+        <button type="button" onClick={addTrack} disabled={!stream}>Add track</button>
+      </div>
+      {renderStatus()}
     </>
   )
 }
