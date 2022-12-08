@@ -5,10 +5,10 @@ import { APP_PORT } from "./constants"
 import { BroadcastType } from "./requests/join.request"
 import { initEventStream, writeRelay } from "./middleware/event"
 import EventEmitter from "events"
-import fs from "fs"
-import os from "os"
-import path from "path"
-import https from "https"
+// import fs from "fs"
+// import os from "os"
+// import path from "path"
+// import https from "https"
 
 const emitter = new EventEmitter()
 
@@ -19,10 +19,16 @@ async function run() {
   app.use(cors())
   app.use(express.json())
 
-  const certificate = {
-    key: fs.readFileSync(path.join(os.homedir(), '.vite-plugin-mkcert', 'certs', 'dev.key')),
-    cert: fs.readFileSync(path.join(os.homedir(), '.vite-plugin-mkcert', 'certs', 'dev.pem'))
-  }
+  // UNCOMMENT FOR HTTPS
+
+  // const certificate = {
+  //   key: fs.readFileSync(path.join(os.homedir(), '.vite-plugin-mkcert', 'certs', 'dev.key')),
+  //   cert: fs.readFileSync(path.join(os.homedir(), '.vite-plugin-mkcert', 'certs', 'dev.pem'))
+  // }
+
+  // https.createServer(certificate, app).listen(APP_PORT, () => {
+  //   console.log(`Running relay server on port ${APP_PORT}`)
+  // })
 
   https.createServer(certificate, app).listen(APP_PORT, () => {
     console.log(`Running relay server on port ${APP_PORT}`)
