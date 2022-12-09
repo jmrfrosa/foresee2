@@ -5,11 +5,15 @@ export class RTCConnector {
   pcs: Map<string, RTCPeerConnection>
   messageSource: EventSource
   anchorNode: HTMLElement
+  videos: HTMLVideoElement[]
+
+  onConnectedPeer?: (pc: RTCPeerConnection) => void
 
   private constructor(messageSource: EventSource, anchorNode: HTMLElement) {
     this.pcs = new Map()
     this.messageSource = messageSource
     this.anchorNode = anchorNode
+    this.videos = []
 
     this.bindListeners()
   }
@@ -68,6 +72,10 @@ export class RTCConnector {
     const peerConnection = ev.target as RTCPeerConnection
 
     console.log(`Connection state change: ${peerConnection.connectionState}`)
+
+    if (peerConnection.connectionState === 'connected' && this.onConnectedPeer) {
+      this.onConnectedPeer(peerConnection)
+    }
   }
 
   private async handleRemoteTrack(ev: RTCTrackEvent) {
@@ -77,7 +85,9 @@ export class RTCConnector {
 
     const videoElement = document.createElement('video')
     videoElement.srcObject = remoteStream
-    videoElement.controls = true
+    videoElement.autoplay = true
+
+    this.videos.push(videoElement)
 
     this.anchorNode.appendChild(videoElement)
   }
