@@ -2,18 +2,16 @@ import ky from "ky"
 import { RELAY_URL } from "../constants"
 
 export class RTCConnector {
-  pcs: Map<string, RTCPeerConnection>
+  pcs: Map<string, RTCPeerConnection> = new Map()
+  videos: Map<string, HTMLVideoElement> = new Map()
   messageSource: EventSource
   anchorNode: HTMLElement
-  videos: HTMLVideoElement[]
 
   onConnectedPeer?: (pc: RTCPeerConnection) => void
 
   private constructor(messageSource: EventSource, anchorNode: HTMLElement) {
-    this.pcs = new Map()
     this.messageSource = messageSource
     this.anchorNode = anchorNode
-    this.videos = []
 
     this.bindListeners()
   }
@@ -29,6 +27,12 @@ export class RTCConnector {
   bindListeners() {
     this.messageSource.addEventListener('offer', this.handleOffer.bind(this))
     this.messageSource.addEventListener('ice', this.handleICE.bind(this))
+  }
+
+  getPeerId(rtc: RTCPeerConnection) {
+    for (const [peerId, conn] of this.pcs) {
+      if (conn === rtc) return peerId
+    }
   }
 
   private async handleOffer(ev: MessageEvent<string>) {
@@ -81,21 +85,27 @@ export class RTCConnector {
   private async handleRemoteTrack(ev: RTCTrackEvent) {
     console.log("visual-server#handleRemoteTrack")
 
-    const remoteStream = new MediaStream([ev.track])
+    const peerConnection = ev.target as RTCPeerConnection
+    const videoElement = this.buildVideoElement(ev.track)
+
+    const peerId = this.getPeerId(peerConnection)
+
+    if (!peerId) {
+      throw('Could not find peer')
+    }
+
+    this.videos.set(peerId, videoElement)
+    this.anchorNode.appendChild(videoElement)
+  }
+
+  private buildVideoElement(track: MediaStreamTrack) {
+    const remoteStream = new MediaStream([track])
 
     const videoElement = document.createElement('video')
     videoElement.srcObject = remoteStream
     videoElement.autoplay = true
 
-    this.videos.push(videoElement)
-
-    this.anchorNode.appendChild(videoElement)
-  }
-  
-  private getPeerId(rtc: RTCPeerConnection) {
-    for (const [peerId, conn] of this.pcs) {
-      if (conn === rtc) return peerId
-    }
+    return videoElement
   }
 
   private initConnection(clientId: string) {

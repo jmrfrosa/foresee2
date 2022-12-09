@@ -22,8 +22,15 @@ export class AppScene {
     const sphere: Mesh = MeshBuilder.CreateSphere("sphere", { diameter: 1 }, scene)
 
     comm.onConnectedPeer = (pc) => {
+      const peerId = comm.getPeerId(pc)
+
+      if (!peerId) return
+      const peerVideo = comm.videos.get(peerId)
+
+      if (!peerVideo) return
+
       const webcamMaterial = new StandardMaterial('webcam-mat', scene)
-      const webcamTexture = new VideoTexture('webcam', comm.videos[0], scene)
+      const webcamTexture = new VideoTexture('webcam', peerVideo, scene)
       webcamMaterial.diffuseTexture = webcamTexture
 
       sphere.material = webcamMaterial
