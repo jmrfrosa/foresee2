@@ -8,26 +8,19 @@ export const useRTC = () => {
   const [messageSource, setMessageSource] = useState<EventSource>()
   const [connectionState, setConnectionState] = useState<RTCPeerConnectionState>()
 
+  // Should run on `initialize`
   useEffect(() => {
     if (!relayUrl) return
-    console.log("Setting session id")
 
     const fetchSessionId = async () => {
       setSessionId(await ky.get(`${relayUrl}/client/join`).text())
-
-      console.log('Session id is set:', sessionId)
     }
 
-    fetchSessionId()
+    if (!sessionId) fetchSessionId()
     setMessageSource(new EventSource(`${relayUrl}/server/watch`))
+  }, [relayUrl, pc])
 
-    console.log({ sessionId })
-  }, [relayUrl])
-
-  useEffect(() => {
-    console.log('Session id changed', sessionId)
-  }, [sessionId])
-
+  // Should run after `messageSource` and `sessionId` are available
   useEffect(() => {
     if (!messageSource || !sessionId) {
       console.error('Can not continue without a connected message source or sessionId')
@@ -39,6 +32,7 @@ export const useRTC = () => {
     pc.addEventListener('negotiationneeded', sendOffer)
     pc.addEventListener('icecandidate', sendICE)
     pc.addEventListener('connectionstatechange', handleStateChange)
+    pc.addEventListener('signalingstatechange', handleSignalingChange)
 
     console.log('Events bound and ready to start', { relayUrl, messageSource, pc })
 
@@ -48,7 +42,18 @@ export const useRTC = () => {
   }, [messageSource, sessionId])
 
   const initialize = async (relayUrl: string) => {
+    if (pc.connectionState === 'closed') {
+      setPc(new RTCPeerConnection())
+    }
+
     setRelayUrl(relayUrl)
+  }
+
+  const close = () => {
+    console.log('Closing connection')
+
+    messageSource?.close()
+    pc.close()
   }
 
   const addOrReplaceTrack = (stream: MediaStream) => {
@@ -57,31 +62,21 @@ export const useRTC = () => {
     const senders = pc.getSenders().filter(s => s.track?.kind === track.kind)
     senders?.length ? senders.forEach(s => s.replaceTrack(track)) : pc.addTrack(track)
   }
-  
+
   const handleAnswer = useCallback(async (ev: MessageEvent<string>) => {
-    console.log("client-project#handleAnswer", { ev })
+    console.log("client-project#handleAnswer")
 
     const clientId = ev.lastEventId
-
-    console.log(`CHECKING ${clientId} == ${sessionId}`)
-
     if (clientId !== sessionId) return
 
     const payload = JSON.parse(ev.data) as unknown as RTCSessionDescriptionInit
 
-    console.log('ANSWER PAYLOAD', { payload })
-
     const remoteDescription = new RTCSessionDescription(payload)
-
-    console.log('GENERATED REMOTE DESCRIPTION:', { remoteDescription })
-
     await pc.setRemoteDescription(remoteDescription)
-
-    console.log('NEW REMOTE DESCRIPTION', { remoteDescription, pc: pc.remoteDescription })
   }, [pc, sessionId])
 
   const handleICE = useCallback(async (ev: MessageEvent<string>) => {
-    console.log("client-project#handleICE", { sessionId })
+    console.log("client-project#handleICE")
 
     const clientId = ev.lastEventId
 
@@ -93,7 +88,7 @@ export const useRTC = () => {
   }, [pc, sessionId])
 
   const sendOffer = useCallback(async () => {
-    console.log("client-project#sendOffer", { sessionId, relayUrl })
+    console.log("client-project#sendOffer")
 
     const offer = await pc.createOffer()
     await pc.setLocalDescription(offer)
@@ -102,7 +97,7 @@ export const useRTC = () => {
   }, [pc, relayUrl, sessionId])
 
   const sendICE = useCallback(async (ev: RTCPeerConnectionIceEvent) => {
-    console.log("client-project#sendICE", { sessionId, relayUrl })
+    console.log("client-project#sendICE")
 
     await ky.post(`${relayUrl}/client/broadcast`, { json: { id: sessionId, type: 'ice', payload: ev.candidate } })
   }, [pc, relayUrl, sessionId])
@@ -111,10 +106,21 @@ export const useRTC = () => {
     console.log(`Connection state change: ${pc.connectionState}`)
 
     setConnectionState(pc.connectionState)
-  }, [])
-  
+
+    if (connectionState === 'connected') {
+      messageSource?.close()
+    }
+  }, [pc])
+
+  const handleSignalingChange = useCallback(() => {
+    console.log(`Signaling state change: ${pc.signalingState}`)
+
+    if (pc.signalingState === 'closed') setConnectionState('closed')
+  }, [pc])
+
   return {
     initialize,
+    close,
     addOrReplaceTrack,
     connectionState,
     sessionId,

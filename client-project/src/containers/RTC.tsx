@@ -27,6 +27,10 @@ export const RTC = () => {
     await rtc.initialize(relayUrl)
   }
 
+  const handleDisconnect = () => {
+    rtc.close()
+  }
+
   const addTrack = () => {
     if (!stream) {
       console.error(`No stream available`)
@@ -64,6 +68,7 @@ export const RTC = () => {
       <div>
         <button type="button" onClick={handleJoin}>Join</button>
         <button type="button" onClick={addTrack} disabled={!stream}>Add track</button>
+        <button type="button" onClick={handleDisconnect} disabled={rtc.connectionState !== 'connected'}>Disconnect</button>
       </div>
       {renderStatus()}
     </>
