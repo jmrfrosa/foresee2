@@ -1,0 +1,8 @@
+{
+  "name": "pda",
+  "workspaces": [
+    "packages/client",
+    "packages/relay",
+    "packages/visual"
+  ]
+}
