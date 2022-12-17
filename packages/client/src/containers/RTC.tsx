@@ -5,7 +5,7 @@ import { useRTC } from '../hooks/useRTC'
 import { MediaSelector } from './MediaSelector'
 
 export const RTC = () => {
-  const [relayUrl, setRelayUrl] = useState<string>('')
+  const [relayUrl, setRelayUrl] = useState<string>('http://localhost:8888')
   const [videoDevice, setVideoDevice] = useState<MediaDeviceInfo>()
 
   const videoRef = useRef<HTMLVideoElement>(null)
