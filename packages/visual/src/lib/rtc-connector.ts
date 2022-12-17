@@ -116,6 +116,7 @@ export class RTCConnector {
     const videoElement = currentElement ?? document.createElement('video')
     videoElement.id = id
     videoElement.srcObject = remoteStream
+    videoElement.width = 200
     videoElement.autoplay = true
 
     return videoElement

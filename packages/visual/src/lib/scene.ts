@@ -1,6 +1,6 @@
 import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/inspector";
-import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, VideoTexture, StandardMaterial } from "@babylonjs/core";
+import { PointColor, Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, VideoTexture, StandardMaterial, PointsCloudSystem, Color4, CloudPoint } from "@babylonjs/core";
 import { RTCConnector } from "./rtc-connector";
 
 export class AppScene {
@@ -19,11 +19,10 @@ export class AppScene {
     const camera: ArcRotateCamera = new ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 2, 2, Vector3.Zero(), scene)
     camera.attachControl(canvas, true)
     const light1: HemisphericLight = new HemisphericLight("light1", new Vector3(1, 1, 0), scene)
-    // const sphere: Mesh = MeshBuilder.CreateSphere("sphere", { diameter: 1 }, scene)
 
     const peers = new Map<string, { video: HTMLVideoElement, mesh: Mesh }>()
 
-    comm.onConnectedPeer = (pc) => {
+    comm.onConnectedPeer = async (pc) => {
       const peerId = comm.getPeerId(pc)
 
       if (!peerId) return
@@ -32,14 +31,38 @@ export class AppScene {
       if (!peerVideo) return
 
       const { videoHeight, videoWidth } = peerVideo
-
-      const webcamMaterial = new StandardMaterial('webcam-mat', scene)
       const webcamTexture = new VideoTexture('webcam', peerVideo, scene)
-      webcamMaterial.diffuseTexture = webcamTexture
 
-      const plane = MeshBuilder.CreatePlane("plane", { height: videoHeight, width: videoWidth, sideOrientation: Mesh.DOUBLESIDE }, scene);
+      const plane = MeshBuilder.CreatePlane(`baseMesh-${peerId}`, {
+        height: videoHeight / 2,
+        width: videoWidth / 2,
+      }, scene);
 
-      plane.material = webcamMaterial
+      const particleCloud = new PointsCloudSystem('pcs', 1, scene)
+
+      // Somehow only works like this, using UV and index 1
+      particleCloud.addSurfacePoints(plane, 100000, PointColor.UV, 1)
+      const particleMesh = await particleCloud.buildMeshAsync()
+
+      if (particleMesh.material) {
+        (particleMesh.material as StandardMaterial).emissiveTexture = webcamTexture
+        particleMesh.material.pointSize = 2
+      }
+
+      // particleCloud.updateParticle = function(particle) {
+      //   this.counter++
+      //   particle.position.x += 0.001 * Math.cos(0.01 * this.counter * Math.PI * 2)
+      //   particle.position.y += 0.001 * Math.sin(0.01 * this.counter * Math.PI * 2)
+      //   particle.position.z += 0.001 * Math.sin(0.01 * this.counter * Math.PI * 2)
+
+      //   return particle
+      // }
+
+      // scene.registerBeforeRender(() => {
+      //   particleCloud.setParticles();
+      // });
+
+      plane.dispose();
 
       peers.set(peerId, { video: peerVideo, mesh: plane })
     }
@@ -55,8 +78,6 @@ export class AppScene {
         p.mesh.dispose()
         peers.delete(peerId)
       }
-
-      // sphere.material = null
     }
 
     // hide/show the Inspector
