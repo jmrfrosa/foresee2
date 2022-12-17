@@ -31,6 +31,7 @@ export const useRTC = () => {
     messageSource.addEventListener('ice', handleICE)
     pc.addEventListener('negotiationneeded', sendOffer)
     pc.addEventListener('icecandidate', sendICE)
+    pc.addEventListener('iceconnectionstatechange', handleICEStateChange)
     pc.addEventListener('connectionstatechange', handleStateChange)
     pc.addEventListener('signalingstatechange', handleSignalingChange)
 
@@ -102,6 +103,10 @@ export const useRTC = () => {
     await ky.post(`${relayUrl}/client/broadcast`, { json: { id: sessionId, type: 'ice', payload: ev.candidate } })
   }, [pc, relayUrl, sessionId])
 
+  const handleICEStateChange = useCallback(() => {
+    console.log(`ICE State change: ${pc.iceConnectionState}`)
+  }, [pc])
+
   const handleStateChange = useCallback(() => {
     console.log(`Connection state change: ${pc.connectionState}`)
 
@@ -128,7 +133,9 @@ export const useRTC = () => {
     })
 
     dataChannel.addEventListener('close', () => {
-      console.log('Data channel is closed')
+      console.log('Data channel is closed, auto-disconnecting from client side')
+
+      close()
     })
   }, [pc])
 

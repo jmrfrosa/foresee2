@@ -19,7 +19,9 @@ export class AppScene {
     const camera: ArcRotateCamera = new ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 2, 2, Vector3.Zero(), scene)
     camera.attachControl(canvas, true)
     const light1: HemisphericLight = new HemisphericLight("light1", new Vector3(1, 1, 0), scene)
-    const sphere: Mesh = MeshBuilder.CreateSphere("sphere", { diameter: 1 }, scene)
+    // const sphere: Mesh = MeshBuilder.CreateSphere("sphere", { diameter: 1 }, scene)
+
+    const peers = new Map<string, { video: HTMLVideoElement, mesh: Mesh }>()
 
     comm.onConnectedPeer = (pc) => {
       const peerId = comm.getPeerId(pc)
@@ -29,11 +31,17 @@ export class AppScene {
 
       if (!peerVideo) return
 
+      const { videoHeight, videoWidth } = peerVideo
+
       const webcamMaterial = new StandardMaterial('webcam-mat', scene)
       const webcamTexture = new VideoTexture('webcam', peerVideo, scene)
       webcamMaterial.diffuseTexture = webcamTexture
 
-      sphere.material = webcamMaterial
+      const plane = MeshBuilder.CreatePlane("plane", { height: videoHeight, width: videoWidth, sideOrientation: Mesh.DOUBLESIDE }, scene);
+
+      plane.material = webcamMaterial
+
+      peers.set(peerId, { video: peerVideo, mesh: plane })
     }
 
     comm.onDisconnectedPeer = (pc) => {
@@ -41,7 +49,14 @@ export class AppScene {
 
       if (!peerId) return
 
-      sphere.material = null
+      const p = peers.get(peerId)
+      if (p) {
+        console.log('Disposing!')
+        p.mesh.dispose()
+        peers.delete(peerId)
+      }
+
+      // sphere.material = null
     }
 
     // hide/show the Inspector

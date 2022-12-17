@@ -42,7 +42,10 @@ export class RTCConnector {
     const clientId = ev.lastEventId
     const payload = JSON.parse(ev.data) as unknown as RTCSessionDescriptionInit
 
-    const peerConnection = this.initConnection(clientId)
+    // Does this connection already exist?
+    const existingConnection = this.pcs.get(clientId)
+
+    const peerConnection = existingConnection ?? this.initConnection(clientId)
     const remoteDescription = new RTCSessionDescription(payload)
     peerConnection.setRemoteDescription(remoteDescription)
 
@@ -71,6 +74,12 @@ export class RTCConnector {
     if (!peerConnection) throw(`Could not find peer ${clientId}`)
 
     await peerConnection.addIceCandidate(payload)
+  }
+
+  private async handleICEStateChange(ev: Event) {
+    const peerConnection = ev.currentTarget as RTCPeerConnection
+
+    console.log(`ICE connection state change: ${peerConnection.iceConnectionState}`)
   }
 
   private async handleStateChange(ev: Event) {
@@ -119,6 +128,7 @@ export class RTCConnector {
     peerConnection.ontrack = this.handleRemoteTrack.bind(this)
     peerConnection.ondatachannel = this.handleDataChannel.bind(this)
     peerConnection.onicecandidate = this.sendICE.bind(this)
+    peerConnection.oniceconnectionstatechange = this.handleICEStateChange.bind(this)
     peerConnection.onconnectionstatechange = this.handleStateChange.bind(this)
 
     return peerConnection
@@ -149,7 +159,8 @@ export class RTCConnector {
       if (this.onDisconnectedPeer) {
         this.onDisconnectedPeer(peerConnection)
       }
-    })
 
+      this.pcs.delete(peerId)
+    })
   }
 }
