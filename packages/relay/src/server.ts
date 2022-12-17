@@ -56,10 +56,24 @@ async function run() {
   })
 
   app.get('/clients/watch', [initEventStream], (req: Request, res: Response) => {
-    emitter.on('clientRelay', (ev: BroadcastType) => writeRelay(ev, res))
+    const handler = (ev: BroadcastType) => writeRelay(ev, res)
+    emitter.on('clientRelay', handler)
+
+    req.on('close', () => {
+      console.log('REMOVING LISTENER clientRelay')
+
+      emitter.removeListener('clientRelay', handler)
+    })
   })
 
   app.get('/server/watch', [initEventStream], (req: Request, res: Response) => {
-    emitter.on('serverRelay', (ev: BroadcastType) => writeRelay(ev, res))
+    const handler = (ev: BroadcastType) => writeRelay(ev, res)
+    emitter.on('serverRelay', handler)
+
+    req.on('close', () => {
+      console.log('REMOVING LISTENER serverRelay')
+
+      emitter.removeListener('serverRelay', handler)
+    })
   })
 }
