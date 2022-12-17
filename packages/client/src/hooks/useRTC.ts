@@ -27,8 +27,8 @@ export const useRTC = () => {
       return
     }
 
-    messageSource.addEventListener('ice', handleICE)
     messageSource.addEventListener('answer', handleAnswer)
+    messageSource.addEventListener('ice', handleICE)
     pc.addEventListener('negotiationneeded', sendOffer)
     pc.addEventListener('icecandidate', sendICE)
     pc.addEventListener('connectionstatechange', handleStateChange)
@@ -107,8 +107,10 @@ export const useRTC = () => {
 
     setConnectionState(pc.connectionState)
 
-    if (connectionState === 'connected') {
+    if (pc.connectionState === 'connected') {
       messageSource?.close()
+
+      initDataChannel()
     }
   }, [pc])
 
@@ -116,6 +118,18 @@ export const useRTC = () => {
     console.log(`Signaling state change: ${pc.signalingState}`)
 
     if (pc.signalingState === 'closed') setConnectionState('closed')
+  }, [pc])
+
+  const initDataChannel = useCallback(() => {
+    const dataChannel = pc.createDataChannel('data')
+
+    dataChannel.addEventListener('open', () => {
+      console.log('Data channel is open')
+    })
+
+    dataChannel.addEventListener('close', () => {
+      console.log('Data channel is closed')
+    })
   }, [pc])
 
   return {

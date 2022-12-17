@@ -8,6 +8,7 @@ export class RTCConnector {
   anchorNode: HTMLElement
 
   onConnectedPeer?: (pc: RTCPeerConnection) => void
+  onDisconnectedPeer?: (pc: RTCPeerConnection) => void
 
   private constructor(messageSource: EventSource, anchorNode: HTMLElement) {
     this.messageSource = messageSource
@@ -86,22 +87,25 @@ export class RTCConnector {
     console.log("visual-server#handleRemoteTrack")
 
     const peerConnection = ev.target as RTCPeerConnection
-    const videoElement = this.buildVideoElement(ev.track)
-
     const peerId = this.getPeerId(peerConnection)
 
     if (!peerId) {
       throw('Could not find peer')
     }
 
+    const videoElement = this.buildVideoElement(ev.track, peerId)
+
     this.videos.set(peerId, videoElement)
     this.anchorNode.appendChild(videoElement)
   }
 
-  private buildVideoElement(track: MediaStreamTrack) {
+  private buildVideoElement(track: MediaStreamTrack, id: string) {
     const remoteStream = new MediaStream([track])
 
-    const videoElement = document.createElement('video')
+    const currentElement = document.getElementById(id) as HTMLVideoElement
+
+    const videoElement = currentElement ?? document.createElement('video')
+    videoElement.id = id
     videoElement.srcObject = remoteStream
     videoElement.autoplay = true
 
@@ -112,10 +116,40 @@ export class RTCConnector {
     const peerConnection = new RTCPeerConnection()
     this.pcs.set(clientId, peerConnection)
 
+    peerConnection.ontrack = this.handleRemoteTrack.bind(this)
+    peerConnection.ondatachannel = this.handleDataChannel.bind(this)
     peerConnection.onicecandidate = this.sendICE.bind(this)
     peerConnection.onconnectionstatechange = this.handleStateChange.bind(this)
-    peerConnection.ontrack = this.handleRemoteTrack.bind(this)
 
     return peerConnection
+  }
+
+  private handleDataChannel(ev: RTCDataChannelEvent) {
+    const dataChannel = ev.channel
+    const peerConnection = ev.currentTarget as RTCPeerConnection
+
+    const peerId = this.getPeerId(peerConnection)
+
+    if (!peerId) {
+      throw('Could not find peer')
+    }
+
+    dataChannel.addEventListener('open', () => {
+      console.log('Data channel is open')
+    })
+
+    dataChannel.addEventListener('close', () => {
+      console.log('Data channel is closed')
+
+      const videoNode = document.getElementById(peerId)
+      if (videoNode) this.anchorNode.removeChild(videoNode)
+
+      this.videos.delete(peerId)
+
+      if (this.onDisconnectedPeer) {
+        this.onDisconnectedPeer(peerConnection)
+      }
+    })
+
   }
 }

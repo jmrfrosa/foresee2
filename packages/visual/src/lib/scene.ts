@@ -36,6 +36,14 @@ export class AppScene {
       sphere.material = webcamMaterial
     }
 
+    comm.onDisconnectedPeer = (pc) => {
+      const peerId = comm.getPeerId(pc)
+
+      if (!peerId) return
+
+      sphere.material = null
+    }
+
     // hide/show the Inspector
     window.addEventListener("keydown", (
       ev) => {
