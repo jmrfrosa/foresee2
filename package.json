@@ -4,5 +4,10 @@
     "packages/client",
     "packages/relay",
     "packages/visual"
-  ]
+  ],
+  "scripts": {
+    "client": "npm run dev -w client",
+    "relay": "npm run start -w relay",
+    "visual": "npm run dev -w visual"
+  }
 }
