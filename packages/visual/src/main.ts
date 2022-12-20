@@ -6,7 +6,8 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div></div>
 `
 
-const rootNode = document.getElementById('app')
-const comm = await RTCConnector.initialize(rootNode)
+const feedNode = document.getElementById('feeds')
+const appNode = document.getElementById('app')
+const comm = await RTCConnector.initialize(feedNode)
 
-const scene = new AppScene(comm)
+new AppScene(comm, appNode)
