@@ -34,7 +34,7 @@ export const onConnectionEvent = (context: SceneContextType) => {
     const particleCloud = new PointsCloudSystem('pcs', 1, scene)
 
     // Somehow only works like this, using UV and index 1
-    particleCloud.addSurfacePoints(plane, 100000, PointColor.UV, 1)
+    particleCloud.addSurfacePoints(plane, 10000, PointColor.UV, 1)
     const particleMesh = await particleCloud.buildMeshAsync()
 
     for (const particle of particleCloud.particles) {
@@ -43,7 +43,7 @@ export const onConnectionEvent = (context: SceneContextType) => {
 
     if (particleMesh.material) {
       (particleMesh.material as StandardMaterial).emissiveTexture = webcamTexture
-      particleMesh.material.pointSize = 3
+      particleMesh.material.pointSize = 5
     }
 
     particleCloud.recycleParticle = function(particle) {
@@ -71,11 +71,12 @@ export const onConnectionEvent = (context: SceneContextType) => {
       const period = 100000
       const theta = Math.cos(this.counter * Math.PI * 2 * (1 / (period * 2)))
       // const ampZ = 0.08 * Math.sin(this.counter * Math.sqrt(particle.position.y ** 2 + particle.position.x ** 2) * Math.PI * 2 * (1 / (period * 2)))
-      const ampZ = 0.08 * Math.sin(this.counter * -(particle.position.y ** 2 + particle.position.x ** 2) * Math.PI * 2 * (1 / (period * 2))) * t
+      const ampZ = 0.08 * Math.sin(this.counter * -(particle.position.y ** 2 + particle.position.x ** 2) * Math.PI * 2 * (1 / (period * 2))) * t * 4
       // const ampY = 0.01 * Math.sin(this.counter * Math.sqrt(particle.position.z ** 2 + particle.position.x ** 2) * Math.PI * 2 * (1 / (period * 2)))
-      const ampX = 0.008 * Math.sin(this.counter * Math.sqrt(particle.position.z ** 2 + particle.position.y ** 2) * Math.PI * 2 * (1 / (period * 2)))
+      // const ampX = 0.08 * Math.cos(this.counter * -(particle.position.z ** 2 + particle.position.y ** 2) * Math.PI * 2 * (1 / (period * 2)) * t)
       // particle.position.y = particle.position.y / (1 - ampY * theta)
       // particle.position.x = particle.position.x / (1 + ampX * theta)
+      // particle.position.x += ampX * theta * 0.1
       particle.position.z = ampZ * theta
 
       return particle

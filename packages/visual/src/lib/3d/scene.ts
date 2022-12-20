@@ -25,6 +25,8 @@ export class AppScene {
 
     const camera: ArcRotateCamera = new ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 2, 2, Vector3.Zero(), scene)
     camera.attachControl(canvas, true)
+    camera.wheelPrecision = 100
+
     const light1: HemisphericLight = new HemisphericLight("light1", new Vector3(1, 1, 0), scene)
 
     const peers = new Map<string, { video: HTMLVideoElement, mesh: Mesh }>()
