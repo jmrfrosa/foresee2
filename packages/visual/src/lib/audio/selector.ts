@@ -23,7 +23,8 @@ export const buildAudioSelector = async (rootNode?: HTMLElement | null) => {
   audioSelectNode.addEventListener('change', async (ev) => {
     const deviceId = (ev.target as HTMLSelectElement).value
 
-    selectedAudioDevice = await navigator.mediaDevices.getUserMedia({ audio: { deviceId } })
+    selectedAudioDevice = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: deviceId } } })
+
     audioAnalyzer.swapDevice(selectedAudioDevice)
   })
 

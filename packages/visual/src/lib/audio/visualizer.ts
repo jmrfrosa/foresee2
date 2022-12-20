@@ -18,21 +18,23 @@ export class AudioVisualizer {
   }
 
   frequencyVisualization() {
-    const { analyzer } = this.audioAnalyzer
+    const debugNode = document.getElementById('debug') as HTMLElement
 
-    analyzer.fftSize = 256
+    const { audioData } = this.audioAnalyzer
 
-    const bufferSize = analyzer.frequencyBinCount
-    const dataArray = new Uint8Array(bufferSize)
+    if (this.audioAnalyzer.analyzer) this.audioAnalyzer.analyzer.fftSize = 256
+    const bufferSize = this.audioAnalyzer.analyzer?.frequencyBinCount || 0
+    this.audioAnalyzer.startAnalysis()
 
     this.clearCanvas()
 
     const draw = () => {
       if (!this.context) return
 
+      this.audioAnalyzer.sampleByteFrequency()
       requestAnimationFrame(draw)
 
-      analyzer.getByteFrequencyData(dataArray)
+      debugNode.innerText = this.audioAnalyzer.audioDevice?.id ?? ''
 
       this.context.fillStyle = "rgb(0, 0, 0)"
       this.context.fillRect(0, 0, this.canvas.width, this.canvas.height)
@@ -42,7 +44,7 @@ export class AudioVisualizer {
       let x = 0
 
       for (let i = 0; i < bufferSize; i++) {
-        barHeight = dataArray[i];
+        barHeight = (audioData as Uint8Array)[i];
 
         this.context.fillStyle = "rgb(" + (barHeight + 100) + ",50,50)";
         this.context.fillRect(
@@ -56,6 +58,6 @@ export class AudioVisualizer {
       }
     }
 
-    // draw()
+    draw()
   }
 }

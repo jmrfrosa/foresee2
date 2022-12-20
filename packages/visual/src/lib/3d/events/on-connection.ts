@@ -57,11 +57,11 @@ export const onConnectionEvent = (context: SceneContextType) => {
     //   t = evData
     // })
 
-    const audioAnalyzerBufferSize = audioAnalyzer.analyzer.frequencyBinCount
+    const audioAnalyzerBufferSize = audioAnalyzer.analyzer?.frequencyBinCount || 0
     const audioDataArray = new Uint8Array(audioAnalyzerBufferSize)
 
     particleCloud.updateParticle = function(particle) {
-      audioAnalyzer.analyzer.getByteFrequencyData(audioDataArray)
+      audioAnalyzer.analyzer?.getByteFrequencyData(audioDataArray)
       t = mapToAudioAnalyzerOutputRange(audioDataArray[24])
       GUI.debugLabel.text = String(t)
 
