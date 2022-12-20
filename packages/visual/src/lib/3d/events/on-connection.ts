@@ -1,8 +1,19 @@
 import { MeshBuilder, VideoTexture, PointsCloudSystem, CloudPoint, PointColor, Vector3, StandardMaterial } from "@babylonjs/core"
 import { SceneContextType } from "../types"
 
+const audioAnalyzerFreqBinRangeStart = 0
+const audioAnalyzerFreqBinRangeEnd = 255
+const audioAnalyzerOutputRangeStart = 0
+const audioAnalyzerOutputRangeEnd = 10
+const rangeSlope =
+  (audioAnalyzerOutputRangeEnd - audioAnalyzerOutputRangeStart) / (audioAnalyzerFreqBinRangeEnd - audioAnalyzerFreqBinRangeStart)
+
+function mapToAudioAnalyzerOutputRange(input: number) {
+  return audioAnalyzerOutputRangeStart + rangeSlope * (input - audioAnalyzerFreqBinRangeStart)
+}
+
 export const onConnectionEvent = (context: SceneContextType) => {
-  const { scene, comm, peers, GUI } = context
+  const { scene, comm, audioAnalyzer, peers, GUI } = context
 
   return async (pc: RTCPeerConnection) => {
     const peerId = comm.getPeerId(pc)
@@ -42,22 +53,29 @@ export const onConnectionEvent = (context: SceneContextType) => {
     }
 
     let t = 0
-    GUI.paramSlider.onValueChangedObservable.add((evData) => {
-      t = evData
-    })
+    // GUI.paramSlider.onValueChangedObservable.add((evData) => {
+    //   t = evData
+    // })
+
+    const audioAnalyzerBufferSize = audioAnalyzer.analyzer.frequencyBinCount
+    const audioDataArray = new Uint8Array(audioAnalyzerBufferSize)
 
     particleCloud.updateParticle = function(particle) {
+      audioAnalyzer.analyzer.getByteFrequencyData(audioDataArray)
+      t = mapToAudioAnalyzerOutputRange(audioDataArray[24])
+      GUI.debugLabel.text = String(t)
+
       if (particle.position.lengthSquared() > 1) this.recycleParticle(particle)
 
       this.counter += (scene.deltaTime / 1000)
       const period = 100000
       const theta = Math.cos(this.counter * Math.PI * 2 * (1 / (period * 2)))
       // const ampZ = 0.08 * Math.sin(this.counter * Math.sqrt(particle.position.y ** 2 + particle.position.x ** 2) * Math.PI * 2 * (1 / (period * 2)))
-      const ampZ = 0.08 * Math.sin(this.counter * -(particle.position.y ** 2 + particle.position.x ** 2) * Math.PI * 2 * (1 / (period * 2)) * t)
+      const ampZ = 0.08 * Math.sin(this.counter * -(particle.position.y ** 2 + particle.position.x ** 2) * Math.PI * 2 * (1 / (period * 2))) * t
       // const ampY = 0.01 * Math.sin(this.counter * Math.sqrt(particle.position.z ** 2 + particle.position.x ** 2) * Math.PI * 2 * (1 / (period * 2)))
       const ampX = 0.008 * Math.sin(this.counter * Math.sqrt(particle.position.z ** 2 + particle.position.y ** 2) * Math.PI * 2 * (1 / (period * 2)))
       // particle.position.y = particle.position.y / (1 - ampY * theta)
-      particle.position.x = particle.position.x / (1 + ampX * theta)
+      // particle.position.x = particle.position.x / (1 + ampX * theta)
       particle.position.z = ampZ * theta
 
       return particle

@@ -37,7 +37,7 @@ h1 {
   line-height: 1.1;
 }
 
-#app {
+#scene {
   width: 80%;
   height: 80vh;
   margin: 0 auto;
@@ -45,17 +45,15 @@ h1 {
   text-align: center;
 }
 
+#controls {
+  width: 80%;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
 .main {
   display: flex;
   flex-direction: column;
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
 }
 
 button {

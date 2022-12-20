@@ -1,14 +1,15 @@
 import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/inspector";
 import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, Nullable } from "@babylonjs/core";
-import { RTCConnector } from "./rtc-connector";
-import { buildGUI } from "./3d/gui";
-import { SceneContextType } from "./3d/types";
-import { onConnectionEvent } from "./3d/events/on-connection";
-import { onDisconnectionEvent } from "./3d/events/on-disconnection";
+import { RTCConnector } from "../communication/rtc-connector";
+import { buildGUI } from "./gui";
+import { SceneContextType } from "./types";
+import { onConnectionEvent } from "./events/on-connection";
+import { onDisconnectionEvent } from "./events/on-disconnection";
+import { AudioAnalyzer } from "../audio/analyzer";
 
 export class AppScene {
-  constructor(comm: RTCConnector, rootNode?: Nullable<HTMLElement>) {
+  constructor(comm: RTCConnector, audioAnalyzer: AudioAnalyzer, rootNode?: Nullable<HTMLElement>) {
     // create the canvas html element and attach it to the webpage
     const canvas = document.createElement("canvas")
     canvas.style.width = "100%"
@@ -30,7 +31,7 @@ export class AppScene {
 
     const GUI = buildGUI(scene)
 
-    const sceneContext: SceneContextType = { comm, peers, scene, GUI }
+    const sceneContext: SceneContextType = { comm, peers, audioAnalyzer, scene, GUI }
 
     comm.onConnectedPeer = onConnectionEvent(sceneContext)
     comm.onDisconnectedPeer = onDisconnectionEvent(sceneContext)

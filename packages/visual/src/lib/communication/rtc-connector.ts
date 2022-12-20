@@ -1,5 +1,5 @@
 import ky from "ky"
-import { RELAY_URL } from "../constants"
+import { RELAY_URL } from "../../constants"
 
 export class RTCConnector {
   pcs: Map<string, RTCPeerConnection> = new Map()

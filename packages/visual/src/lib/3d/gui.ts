@@ -18,16 +18,16 @@ export const buildGUI = (scene: Nullable<Scene>) => {
   paramSlider.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT
   paramSlider.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP
 
-  // const debugLabel = new GUI.TextBlock()
-  // debugLabel.text = 'Hello'
-  // debugLabel.fontSize = 26
-  // debugLabel.resizeToFit = true
-  // debugLabel.paddingTop = '5px'
-  // debugLabel.paddingRight = '5px'
-  // debugLabel.paddingBottom = '5px'
-  // debugLabel.paddingLeft = '5px'
-  // debugLabel.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT
-  // debugLabel.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP
+  const debugLabel = new GUI.TextBlock()
+  debugLabel.text = 'Debug'
+  debugLabel.fontSize = 26
+  debugLabel.resizeToFit = true
+  debugLabel.paddingTop = '5px'
+  debugLabel.paddingRight = '5px'
+  debugLabel.paddingBottom = '5px'
+  debugLabel.paddingLeft = '5px'
+  debugLabel.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT
+  debugLabel.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP
 
   // const debugRect = new GUI.Rectangle()
   // debugRect.background = 'black'
@@ -38,10 +38,10 @@ export const buildGUI = (scene: Nullable<Scene>) => {
   // debugRectText.color = 'white'
   // debugRect.addControl(debugRectText)
 
-  // UITexture.addControl(debugLabel)
+  UITexture.addControl(debugLabel)
   // UITexture.addControl(debugRect)
 
-  UITexture.addControl(paramSlider)
+  // UITexture.addControl(paramSlider)
 
-  return { UITexture, paramSlider }
+  return { UITexture, paramSlider, debugLabel }
 }
