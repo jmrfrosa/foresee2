@@ -1,0 +1,74 @@
+import { MeshBuilder, VideoTexture, PointsCloudSystem, CloudPoint, PointColor, Vector3, StandardMaterial } from "@babylonjs/core"
+import { SceneContextType } from "../types"
+
+export const onConnectionEvent = (context: SceneContextType) => {
+  const { scene, comm, peers, GUI } = context
+
+  return async (pc: RTCPeerConnection) => {
+    const peerId = comm.getPeerId(pc)
+
+    if (!peerId) return
+    const peerVideo = comm.videos.get(peerId)
+
+    if (!peerVideo) return
+
+    const { videoHeight, videoWidth } = peerVideo
+    const webcamTexture = new VideoTexture('webcam', peerVideo, scene)
+
+    const plane = MeshBuilder.CreatePlane(`baseMesh-${peerId}`, {
+      height: videoHeight,
+      width: videoWidth,
+    }, scene);
+
+    const particleCloud = new PointsCloudSystem('pcs', 1, scene)
+
+    // Somehow only works like this, using UV and index 1
+    particleCloud.addSurfacePoints(plane, 100000, PointColor.UV, 1)
+    const particleMesh = await particleCloud.buildMeshAsync()
+
+    for (const particle of particleCloud.particles) {
+      (particle as CloudPoint & { initialPos: Vector3 }).initialPos = particle.position.clone()
+    }
+
+    if (particleMesh.material) {
+      (particleMesh.material as StandardMaterial).emissiveTexture = webcamTexture
+      particleMesh.material.pointSize = 3
+    }
+
+    particleCloud.recycleParticle = function(particle) {
+      particle.position = (particle as CloudPoint & { initialPos: Vector3 }).initialPos
+
+      return particle
+    }
+
+    let t = 0
+    GUI.paramSlider.onValueChangedObservable.add((evData) => {
+      t = evData
+    })
+
+    particleCloud.updateParticle = function(particle) {
+      if (particle.position.lengthSquared() > 1) this.recycleParticle(particle)
+
+      this.counter += (scene.deltaTime / 1000)
+      const period = 100000
+      const theta = Math.cos(this.counter * Math.PI * 2 * (1 / (period * 2)))
+      // const ampZ = 0.08 * Math.sin(this.counter * Math.sqrt(particle.position.y ** 2 + particle.position.x ** 2) * Math.PI * 2 * (1 / (period * 2)))
+      const ampZ = 0.08 * Math.sin(this.counter * -(particle.position.y ** 2 + particle.position.x ** 2) * Math.PI * 2 * (1 / (period * 2)) * t)
+      // const ampY = 0.01 * Math.sin(this.counter * Math.sqrt(particle.position.z ** 2 + particle.position.x ** 2) * Math.PI * 2 * (1 / (period * 2)))
+      const ampX = 0.008 * Math.sin(this.counter * Math.sqrt(particle.position.z ** 2 + particle.position.y ** 2) * Math.PI * 2 * (1 / (period * 2)))
+      // particle.position.y = particle.position.y / (1 - ampY * theta)
+      particle.position.x = particle.position.x / (1 + ampX * theta)
+      particle.position.z = ampZ * theta
+
+      return particle
+    }
+
+    scene.registerBeforeRender(() => {
+      particleCloud.setParticles()
+    });
+
+    plane.dispose();
+
+    peers.set(peerId, { video: peerVideo, mesh: plane })
+  }
+}

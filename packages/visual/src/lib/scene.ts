@@ -1,16 +1,22 @@
 import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/inspector";
-import { PointColor, Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, VideoTexture, StandardMaterial, PointsCloudSystem, Color4, CloudPoint } from "@babylonjs/core";
+import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, Nullable } from "@babylonjs/core";
 import { RTCConnector } from "./rtc-connector";
+import { buildGUI } from "./3d/gui";
+import { SceneContextType } from "./3d/types";
+import { onConnectionEvent } from "./3d/events/on-connection";
+import { onDisconnectionEvent } from "./3d/events/on-disconnection";
 
 export class AppScene {
-  constructor(comm: RTCConnector) {
+  constructor(comm: RTCConnector, rootNode?: Nullable<HTMLElement>) {
     // create the canvas html element and attach it to the webpage
     const canvas = document.createElement("canvas")
     canvas.style.width = "100%"
     canvas.style.height = "100%"
     canvas.id = "gameCanvas"
-    document.body.appendChild(canvas)
+
+    const parentNode = rootNode ?? document.body
+    parentNode.appendChild(canvas)
 
     // initialize babylon scene and engine
     const engine = new Engine(canvas, true)
@@ -22,63 +28,12 @@ export class AppScene {
 
     const peers = new Map<string, { video: HTMLVideoElement, mesh: Mesh }>()
 
-    comm.onConnectedPeer = async (pc) => {
-      const peerId = comm.getPeerId(pc)
+    const GUI = buildGUI(scene)
 
-      if (!peerId) return
-      const peerVideo = comm.videos.get(peerId)
+    const sceneContext: SceneContextType = { comm, peers, scene, GUI }
 
-      if (!peerVideo) return
-
-      const { videoHeight, videoWidth } = peerVideo
-      const webcamTexture = new VideoTexture('webcam', peerVideo, scene)
-
-      const plane = MeshBuilder.CreatePlane(`baseMesh-${peerId}`, {
-        height: videoHeight / 2,
-        width: videoWidth / 2,
-      }, scene);
-
-      const particleCloud = new PointsCloudSystem('pcs', 1, scene)
-
-      // Somehow only works like this, using UV and index 1
-      particleCloud.addSurfacePoints(plane, 100000, PointColor.UV, 1)
-      const particleMesh = await particleCloud.buildMeshAsync()
-
-      if (particleMesh.material) {
-        (particleMesh.material as StandardMaterial).emissiveTexture = webcamTexture
-        particleMesh.material.pointSize = 2
-      }
-
-      // particleCloud.updateParticle = function(particle) {
-      //   this.counter++
-      //   particle.position.x += 0.001 * Math.cos(0.01 * this.counter * Math.PI * 2)
-      //   particle.position.y += 0.001 * Math.sin(0.01 * this.counter * Math.PI * 2)
-      //   particle.position.z += 0.001 * Math.sin(0.01 * this.counter * Math.PI * 2)
-
-      //   return particle
-      // }
-
-      // scene.registerBeforeRender(() => {
-      //   particleCloud.setParticles();
-      // });
-
-      plane.dispose();
-
-      peers.set(peerId, { video: peerVideo, mesh: plane })
-    }
-
-    comm.onDisconnectedPeer = (pc) => {
-      const peerId = comm.getPeerId(pc)
-
-      if (!peerId) return
-
-      const p = peers.get(peerId)
-      if (p) {
-        console.log('Disposing!')
-        p.mesh.dispose()
-        peers.delete(peerId)
-      }
-    }
+    comm.onConnectedPeer = onConnectionEvent(sceneContext)
+    comm.onDisconnectedPeer = onDisconnectionEvent(sceneContext)
 
     // hide/show the Inspector
     window.addEventListener("keydown", (
