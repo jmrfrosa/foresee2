@@ -2,7 +2,7 @@ import ky from 'ky'
 import { useCallback, useEffect, useState } from 'preact/hooks'
 
 export const useRTC = () => {
-  const [pc, setPc] = useState<RTCPeerConnection>(new RTCPeerConnection())
+  let [pc, setPc] = useState<RTCPeerConnection>(new RTCPeerConnection())
   const [relayUrl, setRelayUrl] = useState<string>()
   const [sessionId, setSessionId] = useState<string>()
   const [messageSource, setMessageSource] = useState<EventSource>()
@@ -55,6 +55,9 @@ export const useRTC = () => {
 
     messageSource?.close()
     pc.close()
+
+    //@ts-ignore
+    pc = null
   }
 
   const addOrReplaceTrack = (stream: MediaStream) => {

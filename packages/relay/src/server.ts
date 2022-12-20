@@ -60,7 +60,7 @@ async function run() {
     emitter.on('clientRelay', handler)
 
     req.on('close', () => {
-      console.log('REMOVING LISTENER clientRelay')
+      console.log('REMOVING LISTENER clientRelay, current listeners: %o', emitter.listenerCount('clientRelay'))
 
       emitter.removeListener('clientRelay', handler)
     })
@@ -71,7 +71,7 @@ async function run() {
     emitter.on('serverRelay', handler)
 
     req.on('close', () => {
-      console.log('REMOVING LISTENER serverRelay')
+      console.log('REMOVING LISTENER serverRelay, current listeners: %o', emitter.listenerCount('serverRelay'))
 
       emitter.removeListener('serverRelay', handler)
     })
