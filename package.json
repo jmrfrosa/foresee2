@@ -6,10 +6,12 @@
     "packages/visual"
   ],
   "scripts": {
-    "client": "npm run dev -w client -- --host",
+    "client:dev": "npm run dev -w client -- --host",
     "client:build": "npm run build -w client",
-    "relay": "npm run start -w relay",
-    "visual": "npm run dev -w visual -- --host",
+    "relay:dev": "npm run dev -w relay",
+    "relay:build": "npm run build -w relay",
+    "relay:start": "npm run start -w relay",
+    "visual:dev": "npm run dev -w visual -- --host",
     "visual:build": "npm run build -w visual"
   }
 }

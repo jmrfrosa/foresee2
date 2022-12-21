@@ -8,7 +8,8 @@
     "strict": true /* Enable all strict type-checking options. */,
     "strictBindCallApply": true /* Check that the arguments for 'bind', 'call', and 'apply' methods match the original function. */,
     "skipLibCheck": true /* Skip type checking all .d.ts files. */,
-    "moduleResolution": "Node"
+    "moduleResolution": "Node",
+    "outDir": "build"
   },
   "ts-node": {
     "esm": true,
