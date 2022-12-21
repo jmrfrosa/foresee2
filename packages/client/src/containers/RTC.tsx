@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { JSXInternal } from 'preact/src/jsx'
+import { RELAY_URL } from '../constants'
 import { useMediaStream } from '../hooks/useMediaStream'
 import { useRTC } from '../hooks/useRTC'
-import { getRelayURL } from '../lib/relayUrl'
 import { MediaSelector } from './MediaSelector'
 
 export const RTC = () => {
-  const [relayUrl, setRelayUrl] = useState<string>(getRelayURL())
+  const [relayUrl, setRelayUrl] = useState<string>(RELAY_URL)
   const [videoDevice, setVideoDevice] = useState<MediaDeviceInfo>()
 
   const videoRef = useRef<HTMLVideoElement>(null)
