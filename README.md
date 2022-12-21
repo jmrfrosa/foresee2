@@ -7,8 +7,13 @@ Visual generative application taking user video input and mixing it with system 
 - [x] Client application
 - [x] WebRTC signaling server
 - [x] Live video broadcast into 3d engine
-- [ ] Audio input & analysis
-- [ ] Generative visuals
+- [x] Audio input & analysis
+- [x] Generative visuals
+
+^
+|
+
+*It works!* Still very crude, though.
 
 ------------
 
