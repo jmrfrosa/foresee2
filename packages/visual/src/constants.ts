@@ -1,1 +1,1 @@
-export const RELAY_URL = 'http://localhost:8888'
+export const RELAY_URL = import.meta.env.VITE_RELAY_URL
