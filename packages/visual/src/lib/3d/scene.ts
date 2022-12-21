@@ -1,6 +1,7 @@
 import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/inspector";
-import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, Nullable } from "@babylonjs/core";
+import { Engine, Scene, Vector3, HemisphericLight, Mesh, Nullable, UniversalCamera, MeshBuilder } from "@babylonjs/core";
+import { GridMaterial } from "@babylonjs/materials"
 import { RTCConnector } from "../communication/rtc-connector";
 import { buildGUI } from "./gui";
 import { SceneContextType } from "./types";
@@ -23,15 +24,23 @@ export class AppScene {
     const engine = new Engine(canvas, true)
     const scene = new Scene(engine)
 
-    const camera: ArcRotateCamera = new ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 2, 2, Vector3.Zero(), scene)
+    //const camera = new ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 2, 2, Vector3.Zero(), scene)
+    const camera = new UniversalCamera("Camera", new Vector3(0, 1, -5), scene)
     camera.attachControl(canvas, true)
-    camera.wheelPrecision = 100
+    //camera.wheelPrecision = 100
+
+    const ground = MeshBuilder.CreateGround('ground', { width: 10, height: 10 }, scene)
+    ground.material = new GridMaterial('groundMaterial', scene)
 
     const light1: HemisphericLight = new HemisphericLight("light1", new Vector3(1, 1, 0), scene)
 
     const peers = new Map<string, { video: HTMLVideoElement, mesh: Mesh }>()
 
     const GUI = buildGUI(scene)
+
+    GUI.fullScreenToggle.onPointerUpObservable.add(() => {
+      engine.switchFullscreen(false)
+    })
 
     const sceneContext: SceneContextType = { comm, peers, audioAnalyzer, scene, GUI }
 
