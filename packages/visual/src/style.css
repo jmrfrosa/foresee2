@@ -38,8 +38,10 @@ h1 {
 }
 
 #scene {
-  width: 80%;
-  height: 80vh;
+  /* width: 80%;
+  height: 80vh; */
+  width: 1920px;
+  height: 1080px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
