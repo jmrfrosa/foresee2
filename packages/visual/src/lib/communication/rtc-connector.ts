@@ -18,8 +18,10 @@ export class RTCConnector {
   }
 
   static async initialize(anchorNode: HTMLElement | null) {
-    const messageSource = new EventSource(`${RELAY_URL}/clients/watch`)
+    const sourceUrl = `${RELAY_URL}/clients/watch`
+    const messageSource = new EventSource(sourceUrl)
 
+    console.log(`Connected to ${sourceUrl}, %o`, messageSource)
     if (!anchorNode) throw('Not a valid HTMLElement')
 
     return new RTCConnector(messageSource, anchorNode)
@@ -50,9 +52,12 @@ export class RTCConnector {
     peerConnection.setRemoteDescription(remoteDescription)
 
     const answer = await peerConnection.createAnswer()
-    peerConnection.setLocalDescription(answer)
 
     ky.post(`${RELAY_URL}/server/broadcast`, { json: { id: clientId, type: 'answer', payload: answer } })
+
+    // Setting the local description will trigger the 'icecandidate' event
+    // Hence we only do this after broadcasting the answer to the client
+    peerConnection.setLocalDescription(answer)
   }
 
   private async sendICE(ev: RTCPeerConnectionIceEvent) {

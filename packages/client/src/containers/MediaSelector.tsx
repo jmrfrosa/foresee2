@@ -9,7 +9,8 @@ interface Props {
 
 export const MediaSelector: FunctionalComponent<Props> = ({ selectedDeviceId, deviceList, onChange }) => {
   return (
-    <select value={selectedDeviceId} onChange={onChange}>
+    <select value={selectedDeviceId} onInput={onChange}>
+      <option value=''></option>
       {(deviceList || []).map(device => {
         return (
           <option value={device.deviceId}>{device.label}</option>

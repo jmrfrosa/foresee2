@@ -18,7 +18,7 @@ export const useMediaStream = () => {
         await getVideoStream()
 
         const devices = await navigator.mediaDevices.enumerateDevices()
-        setDeviceList(devices)
+        setDeviceList(devices.filter(d => d.kind === 'videoinput'))
         setStatus(StreamStatusEnum.ALLOWED)
       } catch {
         setStatus(StreamStatusEnum.DENIED)
@@ -32,11 +32,7 @@ export const useMediaStream = () => {
     try {
       const newStream = await getVideoStream({ deviceId })
 
-      setStream((prevStream) => {
-        console.log('CHANGING STREAM', { prevStream, newStream })
-
-        return newStream
-      })
+      setStream(newStream)
       setStatus(StreamStatusEnum.ALLOWED)
     } catch {
       setStatus(StreamStatusEnum.DENIED)

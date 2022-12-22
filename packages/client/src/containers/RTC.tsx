@@ -1,12 +1,10 @@
-import { useEffect, useRef, useState } from 'preact/hooks'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { JSXInternal } from 'preact/src/jsx'
-import { RELAY_URL } from '../constants'
 import { useMediaStream } from '../hooks/useMediaStream'
 import { useRTC } from '../hooks/useRTC'
 import { MediaSelector } from './MediaSelector'
 
 export const RTC = () => {
-  const [relayUrl, setRelayUrl] = useState<string>(RELAY_URL)
   const [videoDevice, setVideoDevice] = useState<MediaDeviceInfo>()
 
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -14,38 +12,41 @@ export const RTC = () => {
   const { deviceList, stream, changeStream, status: mediaStreamStatus } = useMediaStream()
   const rtc = useRTC()
 
+  const canConnect = stream && Boolean(stream?.getVideoTracks()?.length)
+  const canDisconnect =
+    rtc.connectionStatus?.pcState &&
+    rtc.connectionStatus?.iceState &&
+    rtc.connectionStatus?.signalingState &&
+    rtc.connectionStatus?.dataChannelState
+
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.srcObject = stream ?? null
     }
 
-    if (stream && rtc.connectionState === 'connected') {
-      rtc.addOrReplaceTrack(stream)
+    if (stream && rtc.connectionStatus.pcState === 'connected') {
+      rtc.setMediaStream(stream)
     }
   }, [stream])
 
-  const handleJoin = async () => {
-    await rtc.initialize(relayUrl)
-  }
-
-  const handleDisconnect = () => {
-    rtc.close()
-  }
-
-  const addTrack = () => {
-    if (!stream) {
-      console.error(`No stream available`)
+  const handleConnect = useCallback(async () => {
+    if (!canConnect) {
+      console.error('No video stream is present, cannot connect')
       return
     }
 
-    rtc.addOrReplaceTrack(stream)
+    rtc.initialize(stream)
+  }, [canConnect, stream])
+
+  const handleDisconnect = () => {
+    rtc.close()
   }
 
   const renderStatus = () => (
     <div>
       {Boolean(rtc.sessionId) && <><br /><div>ID: {rtc.sessionId}</div><br /></>}
       <div>Media: {videoDevice?.label} / {mediaStreamStatus}</div>
-      <div>Status: {rtc.connectionState}</div>
+      <div>Status: {JSON.stringify(rtc.connectionStatus, undefined, '\t')}</div>
     </div>
   )
 
@@ -63,13 +64,11 @@ export const RTC = () => {
         {stream && <video ref={videoRef} autoPlay />}
       </div>
       <div>
-        <input type="text" value={relayUrl} onInput={(e) => setRelayUrl(e.currentTarget.value)} />
         <MediaSelector onChange={handleMediaChange} selectedDeviceId={videoDevice?.deviceId} deviceList={deviceList} />
       </div>
       <div>
-        <button type="button" onClick={handleJoin}>Join</button>
-        <button type="button" onClick={addTrack} disabled={!stream}>Add track</button>
-        <button type="button" onClick={handleDisconnect} disabled={rtc.connectionState !== 'connected'}>Disconnect</button>
+        <button type="button" onClick={handleConnect} disabled={!canConnect}>Connect</button>
+        <button type="button" onClick={handleDisconnect} disabled={!canDisconnect}>Disconnect</button>
       </div>
       {renderStatus()}
     </>
