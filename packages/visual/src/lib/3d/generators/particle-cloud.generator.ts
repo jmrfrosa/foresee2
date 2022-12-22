@@ -1,26 +1,10 @@
-import { CloudPoint, Mesh, PointColor, PointsCloudSystem, StandardMaterial, Vector3, VideoTexture } from "@babylonjs/core";
+import { CloudPoint, PointColor, PointsCloudSystem, StandardMaterial, Vector3 } from "@babylonjs/core";
 import { generateRangeMapper } from "../../utility";
-import { SceneContextType } from "../types";
+import { BaseTransformGenerator } from "./base.generator";
 
 type CustomCloudPoint = CloudPoint & { initialPos: Vector3 }
 
-interface GeneratorInterface {
-  peerObjects: unknown[]
-  webcamTexture: VideoTexture
-  peerSeed: number
-}
-
-export class ParticleCloudGenerator {
-  baseMesh: Mesh
-  context: SceneContextType
-  extra: GeneratorInterface
-
-  constructor(baseMesh: Mesh, context: SceneContextType, extra: GeneratorInterface) {
-    this.baseMesh = baseMesh
-    this.context = context
-    this.extra = extra
-  }
-
+export class ParticleCloudGenerator extends BaseTransformGenerator {
   async generate() {
     const { peerObjects: objects, webcamTexture, peerSeed } = this.extra
     const dt = this.context.scene.deltaTime
