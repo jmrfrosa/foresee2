@@ -1,7 +1,8 @@
-import { CloudPoint, Mesh, PointColor, PointsCloudSystem, Scene, StandardMaterial, Vector3, VideoTexture } from "@babylonjs/core";
-import { AudioAnalyzer } from "../../audio/analyzer";
+import { CloudPoint, Mesh, PointColor, PointsCloudSystem, StandardMaterial, Vector3, VideoTexture } from "@babylonjs/core";
 import { generateRangeMapper } from "../../utility";
 import { SceneContextType } from "../types";
+
+type CustomCloudPoint = CloudPoint & { initialPos: Vector3 }
 
 interface GeneratorInterface {
   peerObjects: unknown[]
@@ -10,34 +11,34 @@ interface GeneratorInterface {
 }
 
 export class ParticleCloudGenerator {
-  scene: Scene
   baseMesh: Mesh
-  audioAnalyzer: AudioAnalyzer
+  context: SceneContextType
   extra: GeneratorInterface
 
-  constructor(baseMesh: Mesh, { scene, audioAnalyzer }: SceneContextType, extra: GeneratorInterface) {
+  constructor(baseMesh: Mesh, context: SceneContextType, extra: GeneratorInterface) {
     this.baseMesh = baseMesh
-    this.scene = scene
-    this.audioAnalyzer = audioAnalyzer
+    this.context = context
     this.extra = extra
   }
 
   async generate() {
     const { peerObjects: objects, webcamTexture, peerSeed } = this.extra
-    const dt = this.scene.deltaTime
+    const dt = this.context.scene.deltaTime
 
-    const particleCloud = new PointsCloudSystem('pcs', 1, this.scene)
+    const particleCloud = new PointsCloudSystem('pcs', 1, this.context.scene)
     objects.push(particleCloud)
 
     // Somehow only works like this, using UV and index 1
     particleCloud.addSurfacePoints(this.baseMesh, 10000, PointColor.UV, 1)
+
+    // We enhance particles with extra data about their original position. This will be available later.
+    for (const particle of particleCloud.particles) {
+      (particle as CustomCloudPoint).initialPos = particle.position.clone()
+    }
+
     const particleMesh = await particleCloud.buildMeshAsync()
     particleMesh.position = this.baseMesh.position
     objects.push(particleMesh)
-
-    for (const particle of particleCloud.particles) {
-      (particle as CloudPoint & { initialPos: Vector3 }).initialPos = particle.position.clone()
-    }
 
     if (particleMesh.material) {
       (particleMesh.material as StandardMaterial).emissiveTexture = webcamTexture
@@ -56,15 +57,21 @@ export class ParticleCloudGenerator {
     // Must be inside `function` to grant access to internal `this`
     const extCtx = this
     particleCloud.updateParticle = function(particle) {
-      let p = particle as CloudPoint & { initialPos: Vector3 }
-      if (!extCtx.audioAnalyzer.audioData) return p
+      let p = particle as CustomCloudPoint
+      if (!extCtx.context.audioAnalyzer.audioData) return p
 
-      if (p.position.lengthSquared() > 1.5) this.recycleParticle(p)
+      if (p.position.lengthSquared() > 3) this.recycleParticle(p)
 
-      extCtx.audioAnalyzer.sampleByteFrequency()
-      let t1 = paramMapper1(extCtx.audioAnalyzer.audioData[24])
-      let t2 = paramMapper2(extCtx.audioAnalyzer.audioData[24])
-      // GUI.debugLabel.text = String(t2)
+      // |  Calling `sampleByteFrequency` is not necessary
+      // |  here if we're already calling it elsewhere, e.g.
+      // |  in the main page visualizer.
+      // V
+      // extCtx.context.audioAnalyzer.sampleByteFrequency()
+      let t1 = paramMapper1(extCtx.context.audioAnalyzer.audioData[24])
+      let t2 = paramMapper2(extCtx.context.audioAnalyzer.audioData[24])
+
+      // Debug
+      extCtx.context.GUI.debugLabel.text = String(t2)
 
       this.counter += (dt / 1000)
       const period = 100000
@@ -86,7 +93,7 @@ export class ParticleCloudGenerator {
       particleCloud.setParticles()
     }
 
-    this.scene.registerBeforeRender(beforeRender);
+    this.context.scene.registerBeforeRender(beforeRender);
 
     this.baseMesh.dispose();
 
