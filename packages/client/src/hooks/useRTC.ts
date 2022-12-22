@@ -83,14 +83,16 @@ export const useRTC = () => {
     setMediaStream(initialStream)
   }
 
-  const close = () => {
+  const close = (orphanReference?: unknown) => {
     console.log('Clearing existing connections')
 
     messageSource?.close()
     pc?.close()
-
-    //@ts-ignore
     pc = null
+
+    // In case `close` is called from an event, a related reference may still be alive there
+    // This attempts to ensure it's garbage-collected as soon as possible
+    orphanReference = null
 
     dispatchStatus({ type: 'clearState' })
   }
@@ -149,39 +151,42 @@ export const useRTC = () => {
     await ky.post(`${RELAY_URL}/client/broadcast`, { json: { id: sessionId, type: 'ice', payload: ev.candidate } })
   }, [pc, sessionId])
 
-  const handleICEStateChange = useCallback(() => {
+  const handleICEStateChange = useCallback((ev: Event) => {
     if (!pc) return
     console.log(`ICE State change: ${pc.iceConnectionState}`)
 
     dispatchStatus({ type: 'updateIceState', payload: pc.iceConnectionState })
 
-    if (pc.iceConnectionState === 'closed') close()
+    const peerConnection = ev.target
+    if (pc.iceConnectionState === 'closed') close(peerConnection)
   }, [pc])
 
-  const handleStateChange = useCallback(() => {
+  const handleStateChange = useCallback((ev: Event) => {
     if (!pc) return
     console.log(`Connection state change: ${pc.connectionState}`)
 
     dispatchStatus({ type: 'updatePcState', payload: pc.connectionState })
 
+    const peerConnection = ev.target
     switch(pc.connectionState) {
       case 'connected':
         messageSource?.close()
         initDataChannel()
         break
       case 'closed':
-        close()
+        close(peerConnection)
         break
     }
   }, [pc])
 
-  const handleSignalingChange = useCallback(() => {
+  const handleSignalingChange = useCallback((ev: Event) => {
     if (!pc) return
     console.log(`Signaling state change: ${pc.signalingState}`)
 
     dispatchStatus({ type: 'updateSignalingState', payload: pc.signalingState })
 
-    if (pc.signalingState === 'closed') close()
+    const peerConnection = ev.target
+    if (pc.signalingState === 'closed') close(peerConnection)
   }, [pc])
 
   const initDataChannel = useCallback(() => {
@@ -190,7 +195,7 @@ export const useRTC = () => {
 
     dataChannel.addEventListener('close', () => {
       dispatchStatus({ type: 'updateDataChannelState', payload: dataChannel.readyState })
-      close()
+      close(dataChannel)
     })
 
     dataChannel.addEventListener('open', () => dispatchStatus({ type: 'updateDataChannelState', payload: dataChannel.readyState }))

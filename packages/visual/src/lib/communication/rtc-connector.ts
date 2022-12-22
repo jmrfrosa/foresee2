@@ -85,6 +85,14 @@ export class RTCConnector {
     const peerConnection = ev.currentTarget as RTCPeerConnection
 
     console.log(`ICE connection state change: ${peerConnection.iceConnectionState}`)
+
+    switch (peerConnection.iceConnectionState) {
+      case 'closed':
+      case 'disconnected':
+      case 'failed':
+        this.handleLostPeerConnection(peerConnection)
+        break
+    }
   }
 
   private async handleStateChange(ev: Event) {
@@ -92,8 +100,27 @@ export class RTCConnector {
 
     console.log(`Connection state change: ${peerConnection.connectionState}`)
 
-    if (peerConnection.connectionState === 'connected' && this.onConnectedPeer) {
-      this.onConnectedPeer(peerConnection)
+    switch (peerConnection.connectionState) {
+      case 'closed':
+      case 'disconnected':
+      case 'failed':
+        this.handleLostPeerConnection(peerConnection)
+        break
+      case 'connected':
+        this.onConnectedPeer && this.onConnectedPeer(peerConnection)
+        break
+    }
+  }
+
+  private async handleSignalingStateChange(ev: Event) {
+    const peerConnection = ev.target as RTCPeerConnection
+
+    console.log(`Signaling state change: ${peerConnection.signalingState}`)
+
+    switch (peerConnection.signalingState) {
+      case 'closed':
+        this.handleLostPeerConnection(peerConnection)
+        break
     }
   }
 
@@ -131,11 +158,12 @@ export class RTCConnector {
     const peerConnection = new RTCPeerConnection()
     this.pcs.set(clientId, peerConnection)
 
-    peerConnection.ontrack = this.handleRemoteTrack.bind(this)
-    peerConnection.ondatachannel = this.handleDataChannel.bind(this)
-    peerConnection.onicecandidate = this.sendICE.bind(this)
-    peerConnection.oniceconnectionstatechange = this.handleICEStateChange.bind(this)
-    peerConnection.onconnectionstatechange = this.handleStateChange.bind(this)
+    peerConnection.addEventListener('track', this.handleRemoteTrack.bind(this))
+    peerConnection.addEventListener('datachannel', this.handleDataChannel.bind(this))
+    peerConnection.addEventListener('icecandidate', this.sendICE.bind(this))
+    peerConnection.addEventListener('iceconnectionstatechange', this.handleICEStateChange.bind(this))
+    peerConnection.addEventListener('connectionstatechange', this.handleStateChange.bind(this))
+    peerConnection.addEventListener('signalingstatechange', this.handleSignalingStateChange.bind(this))
 
     return peerConnection
   }
@@ -157,16 +185,25 @@ export class RTCConnector {
     dataChannel.addEventListener('close', () => {
       console.log('Data channel is closed')
 
-      const videoNode = document.getElementById(peerId)
-      if (videoNode) this.anchorNode.removeChild(videoNode)
-
-      this.videos.delete(peerId)
-
-      if (this.onDisconnectedPeer) {
-        this.onDisconnectedPeer(peerConnection)
-      }
-
-      this.pcs.delete(peerId)
+      this.handleLostPeerConnection(peerConnection, peerId)
     })
+  }
+
+  private handleLostPeerConnection(peerConnection: RTCPeerConnection, peerId?: string) {
+    const id = peerId ?? this.getPeerId(peerConnection)
+    id && this.removePeerVideo(id)
+
+    if (this.onDisconnectedPeer) {
+      this.onDisconnectedPeer(peerConnection)
+    }
+
+    id && this.pcs.delete(id)
+  }
+
+  private removePeerVideo(peerId: string) {
+    const videoNode = document.getElementById(peerId)
+    if (videoNode) this.anchorNode.removeChild(videoNode)
+
+    this.videos.delete(peerId)
   }
 }

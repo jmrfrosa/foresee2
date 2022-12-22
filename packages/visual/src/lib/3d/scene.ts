@@ -34,7 +34,7 @@ export class AppScene {
 
     const light1: HemisphericLight = new HemisphericLight("light1", new Vector3(1, 1, 0), scene)
 
-    const peers = new Map<string, { video: HTMLVideoElement, mesh: Mesh }>()
+    const peers = new Map<string, { video: HTMLVideoElement, objects: unknown[] }>()
 
     const GUI = buildGUI(scene)
 

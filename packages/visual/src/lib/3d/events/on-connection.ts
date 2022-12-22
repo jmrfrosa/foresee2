@@ -7,6 +7,7 @@ export const onConnectionEvent = (context: SceneContextType) => {
 
   return async (pc: RTCPeerConnection) => {
     const peerId = comm.getPeerId(pc)
+    const peerObjects = []
 
     if (!peerId) return
     const peerVideo = comm.videos.get(peerId)
@@ -23,13 +24,16 @@ export const onConnectionEvent = (context: SceneContextType) => {
 
     plane.setPositionWithLocalVector(new Vector3(randomInRange(-1,1), randomInRange(1,2), randomInRange(0,6)))
     plane.billboardMode = 7
+    peerObjects.push(plane)
 
     const particleCloud = new PointsCloudSystem('pcs', 1, scene)
+    peerObjects.push(particleCloud)
 
     // Somehow only works like this, using UV and index 1
     particleCloud.addSurfacePoints(plane, 10000, PointColor.UV, 1)
     const particleMesh = await particleCloud.buildMeshAsync()
     particleMesh.position = plane.position
+    peerObjects.push(particleMesh)
 
     for (const particle of particleCloud.particles) {
       (particle as CloudPoint & { initialPos: Vector3 }).initialPos = particle.position.clone()
@@ -92,14 +96,16 @@ export const onConnectionEvent = (context: SceneContextType) => {
 
     // fluidRenderObj.targetRenderer.fluidColor = new Color3(1,1,1)
 
-    scene.registerBeforeRender(() => {
+    const beforeRender = () => {
       particleCloud.setParticles()
 
       // fluidRenderObj.object.vertexBuffers['position'].updateDirectly(particleCloud.positions, 0)
-    });
+    }
+
+    scene.registerBeforeRender(beforeRender);
 
     plane.dispose();
 
-    peers.set(peerId, { video: peerVideo, mesh: plane })
+    peers.set(peerId, { video: peerVideo, objects: peerObjects, beforeRender })
   }
 }
