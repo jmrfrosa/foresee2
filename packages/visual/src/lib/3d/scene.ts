@@ -42,7 +42,7 @@ export class AppScene {
       engine.switchFullscreen(false)
     })
 
-    const sceneContext: SceneContextType = { comm, peers, audioAnalyzer, scene, GUI }
+    const sceneContext: SceneContextType = { comm, peers, engine, audioAnalyzer, scene, GUI }
 
     comm.onConnectedPeer = onConnectionEvent(sceneContext)
     comm.onDisconnectedPeer = onDisconnectionEvent(sceneContext)
