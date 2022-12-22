@@ -8,10 +8,9 @@ Visual generative application taking user video input and mixing it with system 
 - [x] Audio input & analysis
 - [x] Generative visuals
 
-^
-|
+**It works!**
 
-*It works!* Still very crude, though.
+Still very crude, though.
 
 ------------
 
@@ -26,12 +25,35 @@ $ npm install
 And all necessary packages for all three apps should be installed. They can then be started using:
 
 ```bash
-$ npm run client
-$ npm run relay
-$ npm run visual
+npm run client:dev
+npm run relay:dev
+npm run visual:dev
 ```
 
 Inside the root directory.
+
+<details>
+<summary>Deployment</summary>
+
+The steps above are intended for development. Production builds can be generated using:
+```bash
+npm run client:build
+npm run relay:build
+npm run visual:build
+```
+
+`client` and `visual` are frontend-only and so can be served through a static fileserver such as nginx. Copy over the directory to the server root using e.g:
+```bash
+cp -r ./packages/client/build /var/www/<project_name>/
+```
+
+`relay`, however, is a backend node.js app. You can run it (after building) using:
+```
+npm run relay:start
+```
+  
+</details>
+
 
 ## How does it work?
 
