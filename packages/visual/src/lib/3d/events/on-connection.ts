@@ -1,5 +1,6 @@
 import { MeshBuilder, VideoTexture, Vector3 } from "@babylonjs/core"
 import { randomInRange } from "../../utility"
+import { MorphingMeshGenerator } from "../generators/morphing-mesh.generator"
 import { ParticleCloudGenerator } from "../generators/particle-cloud.generator"
 import { SceneContextType } from "../types"
 
@@ -23,16 +24,22 @@ export const onConnectionEvent = (context: SceneContextType) => {
     const plane = MeshBuilder.CreatePlane(`baseMesh-${peerId}`, {
       height: videoHeight,
       width: videoWidth,
+      updatable: true
     }, scene);
 
     plane.setPositionWithLocalVector(new Vector3(randomInRange(-1,1), randomInRange(1,2), randomInRange(0,6)))
     plane.billboardMode = 7
     peerObjects.push(plane)
 
-    const transformMeshIntoParticleCloud = new ParticleCloudGenerator(plane, context, { peerObjects, peerSeed, webcamTexture })
-    const { beforeRender, objects } = await transformMeshIntoParticleCloud.generate()
+    const extraData = { peerObjects, peerSeed, webcamTexture, peerId }
 
-    peers.set(peerId, { video: peerVideo, objects, beforeRender })
+    // const transformMeshIntoParticleCloud = new ParticleCloudGenerator(plane, context, extraData)
+    // const { beforeRender, objects } = await transformMeshIntoParticleCloud.generate()
+
+    const morphMesh = new MorphingMeshGenerator(plane, context, extraData)
+    const { beforeRender } = morphMesh.generate()
+
+    peers.set(peerId, { video: peerVideo, objects: peerObjects, beforeRender })
   }
 }
 
