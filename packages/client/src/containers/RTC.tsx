@@ -61,7 +61,7 @@ export const RTC = () => {
   return (
     <>
       <div>
-        {stream && <video ref={videoRef} autoPlay />}
+        {stream && <video ref={videoRef} autoPlay playsInline muted />}
       </div>
       <div>
         <MediaSelector onChange={handleMediaChange} selectedDeviceId={videoDevice?.deviceId} deviceList={deviceList} />
