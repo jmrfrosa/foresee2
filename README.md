@@ -1,7 +1,5 @@
 # Foresee v2
 
-WIP
-
 Visual generative application taking user video input and mixing it with system audio, joining them together in a 3d render.
 
 - [x] Client application
@@ -34,6 +32,10 @@ $ npm run visual
 ```
 
 Inside the root directory.
+
+## How does it work?
+
+![image](https://user-images.githubusercontent.com/15141951/209231246-789fcf7a-4ae7-41fe-83d3-7a9d939fde42.png)
 
 ### Client
 
