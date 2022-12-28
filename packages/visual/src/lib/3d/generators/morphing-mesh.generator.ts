@@ -1,37 +1,52 @@
-import { StandardMaterial } from "@babylonjs/core";
+import { Engine, RawTexture, ShaderMaterial, Vector3 } from "@babylonjs/core";
 import { BaseTransformGenerator } from "./base.generator";
 
 export class MorphingMeshGenerator extends BaseTransformGenerator {
   generate() {
-    const webcamMaterial = new StandardMaterial(`webcamMaterial-${this.extra.peerId}`, this.context.scene)
-    webcamMaterial.diffuseTexture = this.extra.webcamTexture
+    const audioDataTexture = this.buildAudioTexture()
+    const webcamShaderMaterial = this.buildWebcamShader(audioDataTexture)
 
-    this.baseMesh.material = webcamMaterial
-
-    const initialPos = this.baseMesh.getPositionData()?.slice(0)
-    if (!initialPos) throw('No position data for mesh')
+    this.baseMesh.material = webcamShaderMaterial
 
     let time = 0
     const beforeRender = () => {
-      this.baseMesh.updateMeshPositions((positions) => {
-        for (var idx = 0; idx < positions.length; idx += 3) {
-          const x = idx
-          const y = idx + 1
-          const z = idx + 2
-
-          // positions[x] = Math.sin(positions[x] / 1000)
-          // positions[y] = Math.sin(positions[y] / 100)
-          const transform = initialPos[x] + Math.sin(time * 0.0001 * positions[x])
-          this.context.GUI.debugLabel.text = String(transform)
-          positions[x] = transform
-        }
-      }, true)
-
       time += this.context.scene.deltaTime
+
+      webcamShaderMaterial.setFloat("time", time)
+      webcamShaderMaterial.setVector3("cameraPosition", this.context.scene.activeCamera?.position ?? Vector3.Zero())
+      audioDataTexture.update(this.context.audioAnalyzer.audioData as Uint8Array)
     }
 
     this.context.scene.registerBeforeRender(beforeRender)
 
     return { beforeRender }
+  }
+
+  private buildWebcamShader(audioDataTexture: RawTexture) {
+    const webcamShaderMaterial = new ShaderMaterial(`webcamShaderMaterial-${this.extra.peerId}`, this.context.scene, './shaders/sorting', {
+      attributes: ["position", "normal", "uv"],
+      uniforms: ["world", "worldView", "worldViewProjection", "view", "projection"],
+      samplers: ['webcamTexture', 'audioSampler'],
+    })
+
+    webcamShaderMaterial.setTexture('webcamTexture', this.extra.webcamTexture)
+    webcamShaderMaterial.setTexture('audioSampler', audioDataTexture)
+    webcamShaderMaterial.setFloat("time", 0)
+    webcamShaderMaterial.setVector3("cameraPosition", Vector3.Zero())
+
+    webcamShaderMaterial.backFaceCulling = false
+
+    return webcamShaderMaterial
+  }
+
+  private buildAudioTexture() {
+    // Ensuring analyzer is all set
+    this.context.audioAnalyzer.startAnalysis()
+    this.context.audioAnalyzer.sampleByteFrequency()
+
+    const audioDataWidth = (this.context.audioAnalyzer.analyzer as AnalyserNode).frequencyBinCount
+    const audioDataTexture = new RawTexture(this.context.audioAnalyzer.audioData ?? null, audioDataWidth, 1, Engine.TEXTUREFORMAT_LUMINANCE, this.context.scene)
+
+    return audioDataTexture
   }
 }
