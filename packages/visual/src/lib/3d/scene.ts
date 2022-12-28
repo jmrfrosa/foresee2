@@ -1,6 +1,6 @@
 import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/inspector";
-import { Engine, Scene, Vector3, HemisphericLight, Mesh, Nullable, UniversalCamera, MeshBuilder, VideoTexture, Camera } from "@babylonjs/core";
+import { Engine, Scene, Vector3, HemisphericLight, Nullable, UniversalCamera, MeshBuilder, VideoTexture, Camera } from "@babylonjs/core";
 import { GridMaterial } from "@babylonjs/materials"
 import { RTCConnector } from "../communication/rtc-connector";
 import { buildGUI } from "./gui";

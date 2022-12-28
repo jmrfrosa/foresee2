@@ -21,22 +21,28 @@ export const onConnectionEvent = (context: SceneContextType) => {
 
     const peerSeed = generatePeerSeed()
 
-    const plane = MeshBuilder.CreatePlane(`baseMesh-${peerId}`, {
+    // const plane = MeshBuilder.CreatePlane(`baseMesh-${peerId}`, {
+    //   height: videoHeight,
+    //   width: videoWidth,
+    //   updatable: true
+    // }, scene);
+
+    const box = MeshBuilder.CreateBox(`baseMesh-${peerId}`, {
       height: videoHeight,
       width: videoWidth,
       updatable: true
-    }, scene);
+    }, scene)
 
-    plane.setPositionWithLocalVector(new Vector3(randomInRange(-1,1), randomInRange(1,2), randomInRange(0,6)))
-    plane.billboardMode = 7
-    peerObjects.push(plane)
+    box.setPositionWithLocalVector(new Vector3(randomInRange(-1,1), randomInRange(1,2), randomInRange(0,6)))
+    // plane.billboardMode = 7
+    peerObjects.push(box)
 
     const extraData = { peerObjects, peerSeed, webcamTexture, peerId }
 
     // const transformMeshIntoParticleCloud = new ParticleCloudGenerator(plane, context, extraData)
     // const { beforeRender, objects } = await transformMeshIntoParticleCloud.generate()
 
-    const morphMesh = new MorphingMeshGenerator(plane, context, extraData)
+    const morphMesh = new MorphingMeshGenerator(box, context, extraData)
     const { beforeRender } = morphMesh.generate()
 
     peers.set(peerId, { video: peerVideo, objects: peerObjects, beforeRender })
