@@ -1,5 +1,6 @@
 import { AudioAnalyzer } from "./analyzer"
 
+// TODO: Legacy, to remove
 export const buildAudioSelector = async (rootNode?: HTMLElement | null) => {
   const defaultAudioDevice = await navigator.mediaDevices.getUserMedia({ audio: true })
   const audioDevices = (await navigator.mediaDevices.enumerateDevices()).filter(device => device.kind === 'audioinput')

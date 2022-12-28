@@ -11,6 +11,8 @@ uniform sampler2D bufferTexture;
 uniform sampler2D webcamTexture;
 uniform sampler2D audioSampler;
 uniform float time;
+uniform float offsetModulatorIntensity;
+uniform float offsetShakerIntensity;
 
 #define MAX_OFFSET 10.
 
@@ -30,8 +32,8 @@ void main(void)
   vec4 fft_color = vec4(uv * pow(fft, 5.0), 0, 1);
 
   // float offset_modulator = (sin(sin(modTime*0.5))*2.0+1.3);
-  float offset_modulator = (fft * 2.0);
-  float offset_shaker = fft * 0.025 * sin(modTime);
+  float offset_modulator = (fft * 2.0) * offsetModulatorIntensity;
+  float offset_shaker = fft * 0.025 * sin(modTime) * offsetShakerIntensity;
 
   // you can try and comment / uncomment these three lines
   float step_y = 0.001 * texel.y * (rand(uv.x) * MAX_OFFSET) * offset_modulator;	// modulate offset

@@ -9,6 +9,7 @@ import { onConnectionEvent } from "./events/on-connection";
 import { onDisconnectionEvent } from "./events/on-disconnection";
 import { AudioAnalyzer } from "../audio/analyzer";
 import { addOverlayEffect } from "./post-process/overlay-effect";
+import { ExternalParamsType } from "../../external-gui/types";
 
 export class AppScene {
   engine: Engine
@@ -16,7 +17,7 @@ export class AppScene {
   mainCamera: Camera
   displayVideo?: VideoTexture
 
-  constructor(comm: RTCConnector, audioAnalyzer: AudioAnalyzer, rootNode?: Nullable<HTMLElement>) {
+  constructor(comm: RTCConnector, audioAnalyzer: AudioAnalyzer, externalParams: ExternalParamsType, rootNode?: Nullable<HTMLElement>) {
     // create the canvas html element and attach it to the webpage
     const canvas = document.createElement("canvas")
     canvas.style.width = "100%"
@@ -52,12 +53,12 @@ export class AppScene {
       engine.switchFullscreen(false)
     })
 
-    const sceneContext: SceneContextType = { comm, peers, engine, audioAnalyzer, scene, GUI }
+    const sceneContext: SceneContextType = { comm, peers, engine, audioAnalyzer, scene, GUI, externalParams }
 
     comm.onConnectedPeer = onConnectionEvent(sceneContext)
     comm.onDisconnectedPeer = onDisconnectionEvent(sceneContext)
 
-    addOverlayEffect(this)
+    addOverlayEffect(this, sceneContext)
 
     // hide/show the Inspector
     window.addEventListener("keydown", (

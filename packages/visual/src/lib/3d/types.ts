@@ -1,4 +1,5 @@
 import { Engine, Scene } from "@babylonjs/core"
+import { ExternalParamsType } from "../../external-gui/types"
 import { AudioAnalyzer } from "../audio/analyzer"
 import { RTCConnector } from "../communication/rtc-connector"
 import { buildGUI } from "./gui"
@@ -10,4 +11,5 @@ export type SceneContextType = {
   audioAnalyzer: AudioAnalyzer
   peers: Map<string, { video: HTMLVideoElement, objects: unknown[], beforeRender?: () => unknown }>
   GUI: ReturnType<typeof buildGUI>
+  externalParams: ExternalParamsType
 }

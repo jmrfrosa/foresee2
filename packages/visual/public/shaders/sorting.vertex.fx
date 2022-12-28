@@ -10,6 +10,9 @@ uniform mat4 world;
 uniform mat4 worldViewProjection;
 uniform sampler2D audioSampler;
 uniform float time;
+uniform float xVertexDeformIntensity;
+uniform float yVertexDeformIntensity;
+uniform float zVertexDeformIntensity;
 
 // Varying
 varying vec3 vPositionW;
@@ -21,9 +24,9 @@ void main(void) {
 
   vec3 v = position;
 
-  v.x += sin( 2. * position.y + (time * 0.001)) * 0.1 * fft;
-  v.y += cos( 2. * position.x + (time * 0.001)) * 0.1 * fft;
-  v.z += sin((pow(v.x, 2.) + pow(v.y, 2.)) * (time * 0.001)) * fft;
+  v.x += sin( 2. * position.y + (time * 0.001)) * 0.1 * fft * xVertexDeformIntensity;
+  v.y += cos( 2. * position.x + (time * 0.001)) * 0.1 * fft * yVertexDeformIntensity;
+  v.z += sin((pow(v.x, 2.) + pow(v.y, 2.)) * (time * 0.001)) * fft * zVertexDeformIntensity;
 
   vec4 outPosition = worldViewProjection * vec4(v, 1.0);
   gl_Position = outPosition;

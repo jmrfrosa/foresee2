@@ -13,6 +13,11 @@ export class MorphingMeshGenerator extends BaseTransformGenerator {
       time += this.context.scene.deltaTime
 
       webcamShaderMaterial.setFloat("time", time)
+      webcamShaderMaterial.setFloat("xVertexDeformIntensity", this.context.externalParams.meshDeformParams.xVertexDeformIntensity)
+      webcamShaderMaterial.setFloat("yVertexDeformIntensity", this.context.externalParams.meshDeformParams.yVertexDeformIntensity)
+      webcamShaderMaterial.setFloat("zVertexDeformIntensity", this.context.externalParams.meshDeformParams.zVertexDeformIntensity)
+      webcamShaderMaterial.setFloat("offsetModulatorIntensity", this.context.externalParams.meshDeformParams.offsetModulatorIntensity)
+      webcamShaderMaterial.setFloat("offsetShakerIntensity", this.context.externalParams.meshDeformParams.offsetShakerIntensity)
       webcamShaderMaterial.setVector3("cameraPosition", this.context.scene.activeCamera?.position ?? Vector3.Zero())
       audioDataTexture.update(this.context.audioAnalyzer.audioData as Uint8Array)
     }
@@ -25,7 +30,7 @@ export class MorphingMeshGenerator extends BaseTransformGenerator {
   private buildWebcamShader(audioDataTexture: RawTexture) {
     const webcamShaderMaterial = new ShaderMaterial(`webcamShaderMaterial-${this.extra.peerId}`, this.context.scene, './shaders/sorting', {
       attributes: ["position", "normal", "uv"],
-      uniforms: ["world", "worldView", "worldViewProjection", "view", "projection"],
+      uniforms: ["world", "worldView", "worldViewProjection", "view", "projection", "param1", "param2"],
       samplers: ['webcamTexture', 'audioSampler'],
     })
 

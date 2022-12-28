@@ -9,6 +9,10 @@ uniform sampler2D textureSampler;
 // Samplers (user)
 uniform sampler2D displayVideoSampler;
 
+// attributes
+uniform float blendingLayerAlpha;
+uniform float mixAlpha;
+
 float hardLight(float s, float d)
 {
 	return (s < 0.5) ? 2.0 * s * d : 1.0 - 2.0 * (1.0 - s) * (1.0 - d);
@@ -28,15 +32,7 @@ void main(void)
   vec4 baseColor = texture2D(textureSampler, vUV);
   vec4 displayVideoColor = texture2D(displayVideoSampler, vUV);
 
-  float mixAlpha = 0.5;
-  if (displayVideoColor.xyz == vec3(0.0)) {
-    mixAlpha = 1.0;
-  }
+  vec4 blend = vec4(hardLight(baseColor.xyz, displayVideoColor.xyz), blendingLayerAlpha); // 1.0
 
-  // vec4 blend = baseColor + displayVideoColor - baseColor * displayVideoColor;
-
-  vec4 blend = vec4(hardLight(baseColor.xyz, displayVideoColor.xyz), 1.0);
-
-  // gl_FragColor = mix(displayVideoColor, baseColor, mixAlpha);
-  gl_FragColor = mix(baseColor, blend, 0.4);
+  gl_FragColor = mix(baseColor, blend, mixAlpha); // 0.4
 }
