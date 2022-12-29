@@ -1,4 +1,5 @@
-import { MeshBuilder, VideoTexture, Vector3 } from "@babylonjs/core"
+import { MeshBuilder, VideoTexture, Vector3, GlowLayer, PointLight } from "@babylonjs/core"
+import { WaterMaterial } from "@babylonjs/materials"
 import { randomInRange } from "../../utility"
 import { MorphingMeshGenerator } from "../generators/morphing-mesh.generator"
 import { ParticleCloudGenerator } from "../generators/particle-cloud.generator"
@@ -21,29 +22,35 @@ export const onConnectionEvent = (context: SceneContextType) => {
 
     const peerSeed = generatePeerSeed()
 
-    // const plane = MeshBuilder.CreatePlane(`baseMesh-${peerId}`, {
-    //   height: videoHeight,
-    //   width: videoWidth,
-    //   updatable: true
-    // }, scene);
-
-    const box = MeshBuilder.CreateBox(`baseMesh-${peerId}`, {
+    const mesh = MeshBuilder.CreatePlane(`baseMesh-${peerId}`, {
       height: videoHeight,
       width: videoWidth,
       updatable: true
-    }, scene)
+    }, scene);
 
-    box.setPositionWithLocalVector(new Vector3(randomInRange(-1,1), randomInRange(1,2), randomInRange(0,6)))
-    // plane.billboardMode = 7
-    peerObjects.push(box)
+    // const mesh = MeshBuilder.CreateBox(`baseMesh-${peerId}`, {
+    //   height: videoHeight,
+    //   width: videoWidth,
+    //   updatable: true
+    // }, scene)
+
+    mesh.setPositionWithLocalVector(new Vector3(randomInRange(-1,1), randomInRange(1,2), randomInRange(0,6)))
+    mesh.billboardMode = 7
+    peerObjects.push(mesh)
 
     const extraData = { peerObjects, peerSeed, webcamTexture, peerId }
 
     // const transformMeshIntoParticleCloud = new ParticleCloudGenerator(plane, context, extraData)
     // const { beforeRender, objects } = await transformMeshIntoParticleCloud.generate()
 
-    const morphMesh = new MorphingMeshGenerator(box, context, extraData)
-    const { beforeRender } = morphMesh.generate()
+    const light = new PointLight(`light-${peerId}`, mesh.position, scene)
+    light.parent = mesh
+
+    const morphMesh = new MorphingMeshGenerator(mesh, context, extraData)
+    const { beforeRender } = morphMesh.generate();
+
+    (scene.getMaterialByName('waterMaterial') as WaterMaterial).addToRenderList(mesh);
+    (scene.getGlowLayerByName('meshGlowLayer') as GlowLayer).referenceMeshToUseItsOwnMaterial(mesh)
 
     peers.set(peerId, { video: peerVideo, objects: peerObjects, beforeRender })
   }

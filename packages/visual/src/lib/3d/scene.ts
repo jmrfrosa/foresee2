@@ -1,6 +1,6 @@
 import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/inspector";
-import { Engine, Scene, Vector3, HemisphericLight, Nullable, UniversalCamera, MeshBuilder, VideoTexture, Camera } from "@babylonjs/core";
+import { Engine, Scene, Vector3, HemisphericLight, Nullable, UniversalCamera, MeshBuilder, VideoTexture, Camera, AssetsManager, GlowLayer } from "@babylonjs/core";
 import { GridMaterial } from "@babylonjs/materials"
 import { RTCConnector } from "../communication/rtc-connector";
 import { buildGUI } from "./gui";
@@ -10,6 +10,8 @@ import { onDisconnectionEvent } from "./events/on-disconnection";
 import { AudioAnalyzer } from "../audio/analyzer";
 import { addOverlayEffect } from "./post-process/overlay-effect";
 import { ExternalParamsType } from "../../external-gui/types";
+import { SkyBuilder } from "./builders/sky.builder";
+import { WaterBuilder } from "./builders/water.builder";
 
 export class AppScene {
   engine: Engine
@@ -31,6 +33,8 @@ export class AppScene {
     const engine = new Engine(canvas, true)
     const scene = new Scene(engine)
 
+    engine.adaptToDeviceRatio = true
+
     this.mainScene = scene
     this.engine = engine
 
@@ -40,44 +44,62 @@ export class AppScene {
 
     this.mainCamera = camera
 
-    const ground = MeshBuilder.CreateGround('ground', { width: 10, height: 10 }, scene)
-    ground.material = new GridMaterial('groundMaterial', scene)
+    // const ground = MeshBuilder.CreateGround('ground', { width: 10, height: 10 }, scene)
+    // ground.material = new GridMaterial('groundMaterial', scene)
 
     const light1: HemisphericLight = new HemisphericLight("light1", new Vector3(1, 1, 0), scene)
 
-    const peers = new Map<string, { video: HTMLVideoElement, objects: unknown[] }>()
+    const assetManager = new AssetsManager(scene)
+    assetManager.addTextureTask('loadWaterTexture', './textures/water/waterbump.png')
 
-    const GUI = buildGUI(scene)
+    assetManager.onTaskSuccessObservable.add((_tasks) => {
+      const peers = new Map<string, { video: HTMLVideoElement, objects: unknown[] }>()
 
-    GUI.fullScreenToggle.onPointerUpObservable.add(() => {
-      engine.switchFullscreen(false)
+      const GUI = buildGUI(scene)
+
+      GUI.fullScreenToggle.onPointerUpObservable.add(() => {
+        engine.switchFullscreen(false)
+      })
+
+      const glowLayer = new GlowLayer('meshGlowLayer', scene, {
+        blurKernelSize: 32,
+      })
+      glowLayer.intensity = 0.6
+
+      const sceneContext: SceneContextType = { comm, peers, engine, audioAnalyzer, scene, GUI, externalParams }
+
+      comm.onConnectedPeer = onConnectionEvent(sceneContext)
+      comm.onDisconnectedPeer = onDisconnectionEvent(sceneContext)
+
+      const skyBuilder = new SkyBuilder(sceneContext)
+      const { skyBox: skyMesh } = skyBuilder.buildGenerative()
+
+      const waterBuilder = new WaterBuilder(sceneContext)
+      waterBuilder.build(skyMesh)
+
+      addOverlayEffect(this, sceneContext)
+
+      // hide/show the Inspector
+      window.addEventListener("keydown", (
+        ev) => {
+          // Shift+Ctrl+Alt+I
+          if (ev.shiftKey && ev.ctrlKey && ev.altKey && ev.keyCode === 73) {
+            if (scene.debugLayer.isVisible()) {
+              scene.debugLayer.hide()
+            } else {
+              scene.debugLayer.show()
+            }
+          }
+        });
+
+        // run the main render loop
+        engine.runRenderLoop(() => {
+          scene.render()
+        }
+      );
     })
 
-    const sceneContext: SceneContextType = { comm, peers, engine, audioAnalyzer, scene, GUI, externalParams }
-
-    comm.onConnectedPeer = onConnectionEvent(sceneContext)
-    comm.onDisconnectedPeer = onDisconnectionEvent(sceneContext)
-
-    addOverlayEffect(this, sceneContext)
-
-    // hide/show the Inspector
-    window.addEventListener("keydown", (
-      ev) => {
-        // Shift+Ctrl+Alt+I
-        if (ev.shiftKey && ev.ctrlKey && ev.altKey && ev.keyCode === 73) {
-          if (scene.debugLayer.isVisible()) {
-            scene.debugLayer.hide()
-          } else {
-            scene.debugLayer.show()
-          }
-        }
-      });
-
-      // run the main render loop
-      engine.runRenderLoop(() => {
-        scene.render()
-      }
-    );
+    assetManager.load()
   }
 
   addDisplayStream(displayStream: MediaStream) {

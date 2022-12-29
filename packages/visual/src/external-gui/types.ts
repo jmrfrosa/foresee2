@@ -4,7 +4,11 @@ export type ExternalParamsType = {
   }
   ppBlendingParams: {
     blendingLayerAlpha: number
+    blendingMixAlpha: number
     mixAlpha: number
+    dryBlendFactor: number
+    effectBlendFactor: number
+    wetBlendFactor: number
   },
   meshDeformParams: {
     xVertexDeformIntensity: number
@@ -12,5 +16,8 @@ export type ExternalParamsType = {
     zVertexDeformIntensity: number
     offsetModulatorIntensity: number
     offsetShakerIntensity: number
+  }
+  sceneParams: {
+    timeFactor: number
   }
 }
