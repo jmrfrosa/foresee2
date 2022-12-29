@@ -1,6 +1,6 @@
 import ky from 'ky'
 import { useCallback, useEffect, useReducer, useState } from 'preact/hooks'
-import { RELAY_URL } from '../constants'
+import { ICE_CONFIG, RELAY_URL } from '../constants'
 
 type ConnectionStatusActionTypes = 'updatePcState' | 'updateIceState' | 'updateDataChannelState' | 'updateSignalingState' | 'clearState'
 type ConnectionStatusActionType = { type: ConnectionStatusActionTypes, payload?: unknown }
@@ -79,7 +79,7 @@ export const useRTC = () => {
   const initialize = async (initialStream: MediaStream) => {
     if (pc?.connectionState !== 'connected') close()
 
-    setPc(new RTCPeerConnection())
+    setPc(new RTCPeerConnection({ ...ICE_CONFIG }))
     setMediaStream(initialStream)
   }
 

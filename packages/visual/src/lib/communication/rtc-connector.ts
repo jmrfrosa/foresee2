@@ -1,5 +1,5 @@
 import ky from "ky"
-import { RELAY_URL } from "../../constants"
+import { ICE_CONFIG, RELAY_URL } from "../../constants"
 
 export class RTCConnector {
   pcs: Map<string, RTCPeerConnection> = new Map()
@@ -155,7 +155,7 @@ export class RTCConnector {
   }
 
   private initConnection(clientId: string) {
-    const peerConnection = new RTCPeerConnection()
+    const peerConnection = new RTCPeerConnection({ ...ICE_CONFIG })
     this.pcs.set(clientId, peerConnection)
 
     peerConnection.addEventListener('track', this.handleRemoteTrack.bind(this))
