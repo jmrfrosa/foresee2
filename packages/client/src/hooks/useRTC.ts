@@ -39,6 +39,7 @@ export const useRTC = () => {
   // Should run on `initialize` (when creating a new PC instance)
   useEffect(() => {
     if (!pc) return
+    console.log('Initializing new PC', pc)
 
     const fetchSessionId = async () => {
       setSessionId(await ky.get(`${RELAY_URL}/client/join`).text())
