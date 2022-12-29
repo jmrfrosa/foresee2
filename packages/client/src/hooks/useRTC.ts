@@ -39,7 +39,6 @@ export const useRTC = () => {
   // Should run on `initialize` (when creating a new PC instance)
   useEffect(() => {
     if (!pc) return
-    console.log('Initializing new PC', pc)
 
     const fetchSessionId = async () => {
       setSessionId(await ky.get(`${RELAY_URL}/client/join`).text())
@@ -80,6 +79,7 @@ export const useRTC = () => {
   const initialize = async (initialStream: MediaStream) => {
     if (pc?.connectionState !== 'connected') close()
 
+    console.log('INITIALIZING PC WITH ICE CONFIG:', ICE_CONFIG)
     setPc(new RTCPeerConnection({ ...ICE_CONFIG }))
     setMediaStream(initialStream)
   }
