@@ -41,6 +41,12 @@ export class AppScene {
     camera.attachControl(canvas, true)
     camera.speed = 0.2
 
+    // WASD
+    camera.keysUp.push(87)
+    camera.keysDown.push(83)
+    camera.keysRight.push(68)
+    camera.keysLeft.push(65)
+
     this.mainCamera = camera
 
     // const ground = MeshBuilder.CreateGround('ground', { width: 10, height: 10 }, scene)
