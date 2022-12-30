@@ -44,9 +44,9 @@ window.addEventListener('beforeunload', () => {
 
 async function buildControlPanel(parentNode?: HTMLElement | null) {
   const hw = window as HijackedWindow
-  const { globals: { audioAnalyzer } } = hw
+  const { globals: { audioAnalyzer, globalStore } } = hw
 
-  controlPanel = new ControlPanel({ audioAnalyzer, guiOptions: { autoPlace: false, width: 750 } })
+  controlPanel = new ControlPanel({ audioAnalyzer, guiOptions: { autoPlace: false, width: 750 }, globalStore })
   await controlPanel.buildGUI()
 
   parentNode?.appendChild(controlPanel.gui.domElement);

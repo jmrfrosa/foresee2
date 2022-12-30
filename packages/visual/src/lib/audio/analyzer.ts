@@ -57,7 +57,6 @@ export class AudioAnalyzer {
     this.audioDevice = newAudioDevice
 
     const { analyzer } = this.buildAnalyzer()
-    this.assignDeviceToSource()
 
     analyzer.fftSize = previousfftSize
 
@@ -76,11 +75,7 @@ export class AudioAnalyzer {
   private assignDeviceToSource() {
     if (!this.audioDevice || !this.context || !this.analyzer) return
 
-    console.log('Assigning with new device', this.audioDevice?.id)
-
     this.source = this.context.createMediaStreamSource(this.audioDevice)
     this.source?.connect(this.analyzer)
-
-    console.log(this.source)
   }
 }
