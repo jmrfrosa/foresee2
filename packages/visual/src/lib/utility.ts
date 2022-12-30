@@ -12,3 +12,8 @@ export function generateRangeMapper(inputStart: number, inputEnd: number, output
 
   return function(input: number) { return outputStart + slope * (input - inputStart) }
 }
+
+// Shorthand mapper for sin/cos
+export function amplitudeMap([rangeStart, rangeEnd]: [rangeStart: number, rangeEnd: number]) {
+  return generateRangeMapper(-1, 1, rangeStart, rangeEnd)
+}

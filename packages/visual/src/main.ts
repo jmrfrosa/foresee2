@@ -4,8 +4,10 @@ import { AppScene } from './lib/3d/scene'
 import { ExtraWindowFields, HijackedWindow } from './controls'
 import { AudioAnalyzer } from './lib/audio/analyzer'
 import { ExternalParamsType } from './external-gui/types'
+import { ControlPanel } from './external-gui/main'
+import { SkyboxTypes } from './lib/3d/builders/sky.builder'
 
-export const globalStore = new Map()
+export const globalStore = new Map<string, unknown>()
 
 const feedNode = document.getElementById('feeds')
 const appNode = document.getElementById('scene')
@@ -30,7 +32,7 @@ startAppBtn.addEventListener('click', () => {
 
   // Hackish way of creating an off-window control interface
   // We hijack the child `window` and use it to carry heavy objects around by reference
-  (controlPanelWindow as any).globals = { audioAnalyzer }
+  (controlPanelWindow as any).globals = { audioAnalyzer, globalStore }
 
   globalStore.set('controlPanelWindow', controlPanelWindow)
 
@@ -42,12 +44,12 @@ startAppBtn.addEventListener('click', () => {
   controlChannel.addEventListener('message', (ev) => {
     switch(ev.data.type) {
       case 'ready':
-        const { globals: { audioAnalyzer, controls } } = controlPanelWindow as Window & ExtraWindowFields
+        const { globals: { controlPanel } } = controlPanelWindow as Window & ExtraWindowFields
 
-        if (!controls)
-          throw('Missing controls!')
+        startApp({ audioAnalyzer: controlPanel.audioAnalyzer, controls: controlPanel.controls })
 
-        startApp({ audioAnalyzer, controls })
+        globalStore.set('controlPanel', controlPanel)
+        setControlPanelEvents(controlPanel)
         break
       case 'closing':
         // Handle control panel close, right now app will soft-lock
@@ -63,10 +65,12 @@ function startApp({ audioAnalyzer, controls }: { audioAnalyzer: AudioAnalyzer; c
 
   startAppBtn.disabled = true
 
+  globalStore.set('appScene', canvasScene)
+
   controlChannel.addEventListener('message', (ev) => {
     switch(ev.data.type) {
       case 'share':
-        const controlPanelWindow: HijackedWindow | undefined = globalStore.get('controlPanelWindow')
+        const controlPanelWindow = globalStore.get('controlPanelWindow') as HijackedWindow | undefined
 
         if (!controlPanelWindow)
           throw('Control panel window was not found')
@@ -76,5 +80,17 @@ function startApp({ audioAnalyzer, controls }: { audioAnalyzer: AudioAnalyzer; c
         if (sharedMedia) canvasScene.addDisplayStream(sharedMedia)
         break
     }
+  })
+}
+
+function setControlPanelEvents(controlPanel: ControlPanel) {
+  controlPanel.addEventListener('skyboxChange', (ev) => {
+    const newSkybox = (ev as CustomEvent<{ value: SkyboxTypes }>).detail.value
+    const scene = globalStore.get('appScene') as AppScene
+
+    if (!scene)
+      throw('Cannot change skybox, scene was not found')
+
+    scene.swapSkybox(newSkybox)
   })
 }

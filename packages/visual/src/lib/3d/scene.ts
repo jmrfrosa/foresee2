@@ -1,6 +1,6 @@
 import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/inspector";
-import { Engine, Scene, Vector3, HemisphericLight, Nullable, UniversalCamera, VideoTexture, Camera, AssetsManager, GlowLayer } from "@babylonjs/core";
+import { Engine, Scene, Vector3, HemisphericLight, Nullable, UniversalCamera, VideoTexture, Camera, AssetsManager, GlowLayer, Mesh } from "@babylonjs/core";
 import { RTCConnector } from "../communication/rtc-connector";
 import { buildGUI } from "./gui";
 import { SceneContextType } from "./types";
@@ -9,7 +9,7 @@ import { onDisconnectionEvent } from "./events/on-disconnection";
 import { AudioAnalyzer } from "../audio/analyzer";
 import { addOverlayEffect } from "./post-process/overlay-effect";
 import { ExternalParamsType } from "../../external-gui/types";
-import { SkyBuilder } from "./builders/sky.builder";
+import { SkyboxTypes, SkyBuilder } from "./builders/sky.builder";
 import { WaterBuilder } from "./builders/water.builder";
 
 export class AppScene {
@@ -17,6 +17,10 @@ export class AppScene {
   mainScene: Scene
   mainCamera: Camera
   displayVideo?: VideoTexture
+  sceneBuilders?: {
+    skybox: SkyBuilder
+    water: WaterBuilder
+  }
 
   constructor(comm: RTCConnector, audioAnalyzer: AudioAnalyzer, externalParams: ExternalParamsType, rootNode?: Nullable<HTMLElement>) {
     // create the canvas html element and attach it to the webpage
@@ -77,10 +81,15 @@ export class AppScene {
       comm.onDisconnectedPeer = onDisconnectionEvent(sceneContext)
 
       const skyBuilder = new SkyBuilder(sceneContext)
-      const { skyBox: skyMesh } = skyBuilder.buildGenerative()
+      const skyMesh = skyBuilder.build(externalParams.sceneParams.skybox).skyBox
 
       const waterBuilder = new WaterBuilder(sceneContext)
       waterBuilder.build(skyMesh)
+
+      this.sceneBuilders = {
+        skybox: skyBuilder,
+        water: waterBuilder,
+      }
 
       addOverlayEffect(this, sceneContext)
 
@@ -130,5 +139,13 @@ export class AppScene {
         this.displayVideo = undefined
       })
     })
+  }
+
+  swapSkybox(newSkybox: SkyboxTypes) {
+    const newMesh = this.sceneBuilders?.skybox.build(newSkybox).skyBox
+
+    if (!newMesh) return
+
+    this.sceneBuilders?.water.addMeshReflection(newMesh)
   }
 }

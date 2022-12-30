@@ -10,9 +10,11 @@ import { getScreenShare } from "./lib/communication/screen-capture";
 
 export type ExtraWindowFields = {
   globals: {
+    globalStore: Map<string, unknown>
     audioAnalyzer: AudioAnalyzer
     controls: ExternalParamsType
     sharedMedia?: MediaStream
+    controlPanel: ControlPanel
   }
 }
 export type HijackedWindow = Window & typeof globalThis & ExtraWindowFields
@@ -24,32 +26,12 @@ let controlPanel: ControlPanel
 controlChannel.addEventListener('message', async (ev) => {
   switch(ev.data.type) {
     case 'ready':
-      const { globals: { audioAnalyzer } } = window as HijackedWindow
       const controlsNode = document.getElementById('controls')
 
-      controlPanel = new ControlPanel({ audioAnalyzer, guiOptions: { autoPlace: false, width: 750 } })
-      await controlPanel.buildGUI()
-
-      controlsNode?.appendChild(controlPanel.gui.domElement);
-
-      (window as HijackedWindow).globals = {
-        controls: controlPanel.controls,
-        audioAnalyzer: controlPanel.audioAnalyzer,
-      }
-
+      await buildControlPanel(controlsNode)
       controlChannel.postMessage({ type: 'ready' })
 
-      controlPanel.addEventListener('shareScreen', async () => {
-        const displayMedia = await getScreenShare()
-
-        if (!displayMedia) return
-
-        (window as HijackedWindow).globals.sharedMedia = displayMedia
-        controlChannel.postMessage({ type: 'share' })
-      })
-
-      const audioVisualizer = new AudioVisualizer(controlPanel.audioAnalyzer, controlsNode)
-      audioVisualizer.frequencyVisualization()
+      buildAudioVisualizer(controlsNode)
       break
     default:
       return
@@ -59,3 +41,38 @@ controlChannel.addEventListener('message', async (ev) => {
 window.addEventListener('beforeunload', () => {
   controlChannel.postMessage({ type: 'closing' })
 })
+
+async function buildControlPanel(parentNode?: HTMLElement | null) {
+  const hw = window as HijackedWindow
+  const { globals: { audioAnalyzer } } = hw
+
+  controlPanel = new ControlPanel({ audioAnalyzer, guiOptions: { autoPlace: false, width: 750 } })
+  await controlPanel.buildGUI()
+
+  parentNode?.appendChild(controlPanel.gui.domElement);
+
+  hw.globals = {
+    ...hw.globals,
+    controls: controlPanel.controls,
+    audioAnalyzer: controlPanel.audioAnalyzer,
+    controlPanel: controlPanel
+  }
+
+  setControlPanelEvents(controlPanel)
+}
+
+function setControlPanelEvents(controlPanel: ControlPanel) {
+  controlPanel.addEventListener('shareScreen', async () => {
+    const displayMedia = await getScreenShare()
+
+    if (!displayMedia) return
+
+    (window as HijackedWindow).globals.sharedMedia = displayMedia
+    controlChannel.postMessage({ type: 'share' })
+  })
+}
+
+function buildAudioVisualizer(parentNode?: HTMLElement | null) {
+  const audioVisualizer = new AudioVisualizer(controlPanel.audioAnalyzer, parentNode)
+  audioVisualizer.frequencyVisualization()
+}

@@ -1,3 +1,5 @@
+import { SkyboxTypes } from "../lib/3d/builders/sky.builder"
+
 export type ExternalParamsType = {
   audioControls: {
     audioDeviceId: string
@@ -20,5 +22,6 @@ export type ExternalParamsType = {
   sceneParams: {
     timeFactor: number
     shareScreen: () => void
+    skybox: SkyboxTypes
   }
 }

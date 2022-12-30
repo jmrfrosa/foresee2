@@ -3,22 +3,26 @@ import { WaterMaterial } from "@babylonjs/materials";
 import { BaseBuilder } from "./base.builder";
 
 export class WaterBuilder extends BaseBuilder {
-  build(skyMesh?: Mesh) {
-    const waterMesh = MeshBuilder.CreateGround('water', { width: 1000, height: 1000 }, this.context.scene)
-    const waterMaterial = new WaterMaterial('waterMaterial', this.context.scene)
-    const waterTexture = this.context.scene.getTextureByName('./textures/water/waterbump.png') as Texture
-    waterTexture.scale(10)
-    waterMaterial.bumpTexture = waterTexture
+  baseMesh?: Mesh
+  material?: WaterMaterial
+  texture?: Texture
 
-    waterMaterial.waterColor = new Color3(0.0, 0.0, 0.1)
-    waterMaterial.bumpHeight *= 5
-    waterMaterial.windForce = 0.5
-    waterMaterial.waveHeight = 0.3
+  build(skyMesh?: Mesh) {
+    this.baseMesh = MeshBuilder.CreateGround('water', { width: 1000, height: 1000 }, this.context.scene)
+    this.material = new WaterMaterial('waterMaterial', this.context.scene)
+    this.texture = this.context.scene.getTextureByName('./textures/water/waterbump.png') as Texture
+
+    this.material.bumpTexture = this.texture
+
+    this.material.waterColor = new Color3(0.0, 0.0, 0.1)
+    this.material.bumpHeight *= 5
+    this.material.windForce = 0.5
+    this.material.waveHeight = 0.3
 
     if(skyMesh)
-      waterMaterial.addToRenderList(skyMesh)
+      this.material.addToRenderList(skyMesh)
 
-    waterMesh.material = waterMaterial
+    this.baseMesh.material = this.material
 
     // const beatScoreRange = 5
     // const beatScoreStart = 0
@@ -29,5 +33,11 @@ export class WaterBuilder extends BaseBuilder {
     //   const beatScore = beatScoreSum && (beatScoreSum / beatScoreRange) || 0
     //   waterMaterial.bumpHeight = Math.cos(beatScore * 0.4) * 2
     // })
+  }
+
+  addMeshReflection(mesh?: Mesh) {
+    if (!this.material || !mesh) return
+
+    this.material.addToRenderList(mesh)
   }
 }
