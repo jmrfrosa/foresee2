@@ -1,4 +1,4 @@
-import { GUI } from 'dat.gui'
+import { GUI, GUIController } from 'dat.gui'
 import { AudioAnalyzer } from '../lib/audio/analyzer';
 import { ExternalParamsType } from './types'
 
@@ -6,22 +6,65 @@ export const audioControls = {
   audioDeviceId: '',
 }
 
-export const addAudioParams = async (gui: GUI, params: Partial<ExternalParamsType>, audioAnalyzer: AudioAnalyzer) => {
-  params['audioControls'] = audioControls
+export class AudioParamPanel {
+  gui: GUI
+  params: Partial<ExternalParamsType>
+  audioAnalyzer: AudioAnalyzer
+  controllers: Record<string, GUIController> = {}
 
-  if (!audioAnalyzer.mediaDeviceList)
-    throw('No media devices have been polled')
+  constructor(gui: GUI, params: Partial<ExternalParamsType>, audioAnalyzer: AudioAnalyzer) {
+    this.gui = gui
+    this.params = params
+    this.audioAnalyzer = audioAnalyzer
+  }
 
-  const selectedDeviceId = audioAnalyzer.audioDevice?.getAudioTracks()[0].getSettings().deviceId
+  build() {
+    this.params['audioControls'] = audioControls
 
-  const audioControlsFolder = gui.addFolder('audioControls')
-  audioControlsFolder.add(audioControls, 'audioDeviceId', audioAnalyzer.mediaDeviceList)
-    .setValue(selectedDeviceId)
-    .onChange(async (deviceId: string) => {
-      const selectedAudioDevice = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: deviceId } } })
+    if (!this.audioAnalyzer.mediaDeviceList)
+      throw('No media devices have been polled')
 
-      audioAnalyzer.swapDevice(selectedAudioDevice)
-  })
+    const selectedDeviceId = this.audioAnalyzer.audioDevice?.getAudioTracks()[0].getSettings().deviceId
 
-  audioControlsFolder.open()
+    const audioControlsFolder = this.gui.addFolder('audioControls')
+    this.controllers.mediaDeviceListController = audioControlsFolder.add(audioControls, 'audioDeviceId', this.audioAnalyzer.mediaDeviceList)
+      .setValue(selectedDeviceId)
+      .onChange(this.handleMediaDeviceChange.bind(this))
+
+    audioControlsFolder.open()
+  }
+
+  addDeviceToList(device: MediaStream) {
+    const options = structuredClone(this.audioAnalyzer.mediaDeviceList)
+    if(!options) return
+
+    options[`Remote Audio ${device.id}`] = device
+
+    this.controllers.mediaDeviceListController = this.controllers.mediaDeviceListController
+      .options(options)
+      .onChange(this.handleMediaDeviceChange.bind(this))
+
+    this.controllers.mediaDeviceListController.updateDisplay()
+  }
+
+  removeDeviceFromList(device: MediaStream) {
+    const options = structuredClone(this.audioAnalyzer.mediaDeviceList)
+    if(!options) return
+
+    delete options[`Remote Audio ${device.id}`]
+
+    this.controllers.mediaDeviceListController = this.controllers.mediaDeviceListController
+      .options(options)
+      .onChange(this.handleMediaDeviceChange.bind(this))
+
+    this.controllers.mediaDeviceListController.updateDisplay()
+  }
+
+  private async handleMediaDeviceChange(device: string | MediaStream) {
+    const selectedAudioDevice = typeof device === 'string' ?
+      await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: device } } }) :
+      device
+
+    this.audioAnalyzer.swapDevice(selectedAudioDevice)
+  }
 }

@@ -1,5 +1,7 @@
 import ky from "ky"
 import { ICE_CONFIG, RELAY_URL } from "../../constants"
+import { ControlPanel } from "../../external-gui/main"
+import { globalStore } from "../../main"
 
 export class RTCConnector {
   pcs: Map<string, RTCPeerConnection> = new Map()
@@ -134,10 +136,22 @@ export class RTCConnector {
       throw('Could not find peer')
     }
 
-    const videoElement = this.buildVideoElement(ev.track, peerId)
+    switch(ev.track.kind) {
+      case 'video':
+        const videoElement = this.buildVideoElement(ev.track, peerId)
 
-    this.videos.set(peerId, videoElement)
-    this.anchorNode.appendChild(videoElement)
+        this.videos.set(peerId, videoElement)
+        this.anchorNode.appendChild(videoElement)
+      case 'audio':
+        const controlPanel = globalStore.get('controlPanel') as ControlPanel | undefined
+
+        if (!controlPanel)
+          throw('Cannot receive audio, control panel is missing')
+
+        controlPanel.addRemoteAudio(ev.track)
+      default:
+        return
+    }
   }
 
   private buildVideoElement(track: MediaStreamTrack, id: string) {

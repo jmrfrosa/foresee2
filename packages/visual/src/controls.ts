@@ -59,6 +59,8 @@ async function buildControlPanel(parentNode?: HTMLElement | null) {
   }
 
   setControlPanelEvents(controlPanel)
+
+  hw.globals.globalStore.set('controlPanel', controlPanel)
 }
 
 function setControlPanelEvents(controlPanel: ControlPanel) {

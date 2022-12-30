@@ -1,10 +1,14 @@
 import { GUI, GUIParams } from 'dat.gui'
 import { AudioAnalyzer } from '../lib/audio/analyzer'
-import { addAudioParams } from './audio-controls'
+import { AudioParamPanel } from './audio-controls'
 import { addBlendingParams } from './blending-controls'
 import { addDeformParams } from './deform-controls'
 import { addSceneParams } from './scene-controls'
 import { ExternalParamsType } from './types'
+
+type ControlPanels = {
+  audioPanel?: AudioParamPanel
+}
 
 interface ControlPanelBuilder {
   audioAnalyzer: AudioAnalyzer
@@ -16,6 +20,7 @@ export class ControlPanel extends EventTarget {
   private _controls: Partial<ExternalParamsType>
   gui: GUI
   audioAnalyzer: AudioAnalyzer
+  panels: ControlPanels = {}
 
   constructor({ audioAnalyzer, guiOptions, controls }: ControlPanelBuilder) {
     super()
@@ -25,7 +30,9 @@ export class ControlPanel extends EventTarget {
   }
 
   async buildGUI() {
-    addAudioParams(this.gui, this.controls, this.audioAnalyzer)
+    this.panels.audioPanel = new AudioParamPanel(this.gui, this.controls, this.audioAnalyzer)
+    this.panels.audioPanel.build()
+
     addBlendingParams(this.gui, this.controls)
     addDeformParams(this.gui, this.controls)
     addSceneParams(this.gui, this.controls, this)
@@ -33,5 +40,15 @@ export class ControlPanel extends EventTarget {
 
   get controls() {
     return this._controls as ExternalParamsType
+  }
+
+  addRemoteAudio(track: MediaStreamTrack) {
+    const mediaStreamFromTrack = new MediaStream([track])
+
+    this.panels.audioPanel?.addDeviceToList(mediaStreamFromTrack)
+
+    track.addEventListener('ended', () => {
+      this.panels.audioPanel?.removeDeviceFromList(mediaStreamFromTrack)
+    })
   }
 }
