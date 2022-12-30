@@ -19,5 +19,6 @@ export type ExternalParamsType = {
   }
   sceneParams: {
     timeFactor: number
+    shareScreen: () => void
   }
 }

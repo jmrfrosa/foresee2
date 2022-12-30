@@ -9,6 +9,7 @@ export class AudioAnalyzer {
   analyzer?: AnalyserNode | null
   source?: MediaStreamAudioSourceNode | null
   audioData?: Uint8Array
+  mediaDeviceList?: Record<string, string>
 
   constructor(audioDevice: MediaStream, options?: AudioAnalyzerOptions) {
     this.audioDevice = audioDevice
@@ -17,6 +18,19 @@ export class AudioAnalyzer {
     this.assignDeviceToSource()
 
     this.startAnalysis()
+  }
+
+  static async create() {
+    const defaultAudioDevice = await navigator.mediaDevices.getUserMedia({ audio: true })
+
+    const mediaDeviceList = (await navigator.mediaDevices.enumerateDevices())
+      .filter(device => device.kind === 'audioinput')
+      .reduce((list, mediaDevice) => ({ ...list, [mediaDevice.label]: mediaDevice.deviceId }), {})
+
+    const defaultAnalyzer = new AudioAnalyzer(defaultAudioDevice)
+    defaultAnalyzer.mediaDeviceList = mediaDeviceList
+
+    return defaultAnalyzer
   }
 
   sampleByteFrequency() {
@@ -34,7 +48,6 @@ export class AudioAnalyzer {
   }
 
   swapDevice(newAudioDevice: MediaStream) {
-    console.log('Deleting device', this.audioDevice?.id)
     const previousfftSize = this.analyzer?.fftSize || 256
 
     this.audioDevice = null

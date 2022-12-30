@@ -6,43 +6,22 @@ export const audioControls = {
   audioDeviceId: '',
 }
 
-let defaultAudioDevice: MediaStream
-let selectedAudioDevice: MediaStream
-let audioAnalyzer: AudioAnalyzer
-
-export const addAudioParams = async (gui: GUI, params: Partial<ExternalParamsType>) => {
+export const addAudioParams = async (gui: GUI, params: Partial<ExternalParamsType>, audioAnalyzer: AudioAnalyzer) => {
   params['audioControls'] = audioControls
 
-  const audioMediaDevices = await getAudioDevices()
-  const audioDeviceList = audioMediaDevices.reduce((list, mediaDevice) => (
-    { ...list, [mediaDevice.label]: mediaDevice.deviceId }
-  ), {})
+  if (!audioAnalyzer.mediaDeviceList)
+    throw('No media devices have been polled')
 
-  initAudioAnalyzer()
-
-  const selectedDeviceId = selectedAudioDevice.getAudioTracks()[0].getSettings().deviceId
+  const selectedDeviceId = audioAnalyzer.audioDevice?.getAudioTracks()[0].getSettings().deviceId
 
   const audioControlsFolder = gui.addFolder('audioControls')
-  audioControlsFolder.add(audioControls, 'audioDeviceId', audioDeviceList)
+  audioControlsFolder.add(audioControls, 'audioDeviceId', audioAnalyzer.mediaDeviceList)
     .setValue(selectedDeviceId)
     .onChange(async (deviceId: string) => {
-      selectedAudioDevice = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: deviceId } } })
+      const selectedAudioDevice = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: deviceId } } })
 
       audioAnalyzer.swapDevice(selectedAudioDevice)
   })
 
   audioControlsFolder.open()
-
-  return { audioAnalyzer }
-}
-
-const getAudioDevices = async () => {
-  defaultAudioDevice = await navigator.mediaDevices.getUserMedia({ audio: true })
-  selectedAudioDevice = defaultAudioDevice
-
-  return (await navigator.mediaDevices.enumerateDevices()).filter(device => device.kind === 'audioinput')
-}
-
-const initAudioAnalyzer = () => {
-  audioAnalyzer = new AudioAnalyzer(selectedAudioDevice)
 }

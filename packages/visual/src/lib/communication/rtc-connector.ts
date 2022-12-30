@@ -155,7 +155,6 @@ export class RTCConnector {
   }
 
   private initConnection(clientId: string) {
-    console.log('INITIALIZING CONNECTION WITH ICE CONFIG:', ICE_CONFIG)
     const peerConnection = new RTCPeerConnection({ ...ICE_CONFIG })
     this.pcs.set(clientId, peerConnection)
 

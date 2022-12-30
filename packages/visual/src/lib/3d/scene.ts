@@ -1,7 +1,6 @@
 import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/inspector";
-import { Engine, Scene, Vector3, HemisphericLight, Nullable, UniversalCamera, MeshBuilder, VideoTexture, Camera, AssetsManager, GlowLayer } from "@babylonjs/core";
-import { GridMaterial } from "@babylonjs/materials"
+import { Engine, Scene, Vector3, HemisphericLight, Nullable, UniversalCamera, VideoTexture, Camera, AssetsManager, GlowLayer } from "@babylonjs/core";
 import { RTCConnector } from "../communication/rtc-connector";
 import { buildGUI } from "./gui";
 import { SceneContextType } from "./types";
@@ -113,7 +112,17 @@ export class AppScene {
 
     this.displayVideo = videoTexture
 
-    // Just for debug, remove later
-    document.getElementById('feeds')?.appendChild(videoElement)
+    const feedsNode = document.getElementById('feeds')
+    feedsNode?.appendChild(videoElement)
+
+    displayStream.getTracks().forEach(track => {
+      track.addEventListener('ended', () => {
+        videoTexture.dispose()
+        feedsNode?.removeChild(videoElement)
+        videoElement.remove()
+
+        this.displayVideo = undefined
+      })
+    })
   }
 }

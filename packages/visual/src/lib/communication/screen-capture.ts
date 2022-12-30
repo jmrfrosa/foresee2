@@ -11,3 +11,12 @@ export const shareScreenForScene = (scene: AppScene, options?: DisplayMediaStrea
     }
   }
 }
+
+export const getScreenShare = async (options?: DisplayMediaStreamOptions) => {
+  try {
+    return await navigator.mediaDevices.getDisplayMedia(options)
+  } catch (err) {
+    console.error(err)
+    return
+  }
+}
