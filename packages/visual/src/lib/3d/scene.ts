@@ -66,9 +66,7 @@ export class AppScene {
 
       const GUI = buildGUI(scene)
 
-      GUI.fullScreenToggle.onPointerUpObservable.add(() => {
-        engine.switchFullscreen(false)
-      })
+      GUI.fullScreenToggle.onPointerUpObservable.add(() => { engine.switchFullscreen(false) })
 
       const glowLayer = new GlowLayer('meshGlowLayer', scene, {
         blurKernelSize: 32,
