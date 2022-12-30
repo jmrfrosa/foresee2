@@ -2,12 +2,15 @@
   "name": "pda",
   "workspaces": [
     "packages/client",
+    "packages/audio-client",
     "packages/relay",
     "packages/visual"
   ],
   "scripts": {
     "client:dev": "npm run dev -w client -- --host",
     "client:build": "npm run build -w client",
+    "audio-client:dev": "npm run dev -w audio-client -- --host",
+    "audio-client:build": "npm run build -w audio-client",
     "relay:dev": "npm run dev -w relay",
     "relay:build": "npm run build -w relay",
     "relay:start": "npm run start -w relay",
