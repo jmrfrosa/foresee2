@@ -55,7 +55,7 @@ export class ParticleCloudGenerator extends BaseTransformGenerator {
       let t2 = paramMapper2(extCtx.context.audioAnalyzer.audioData[24])
 
       // Debug
-      extCtx.context.GUI.debugLabel.text = String(t2)
+      // extCtx.context.GUI.debugLabel.text = String(t2)
 
       this.counter += (dt / 1000)
       const period = 100000

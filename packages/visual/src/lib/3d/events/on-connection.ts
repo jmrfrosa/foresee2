@@ -2,7 +2,7 @@ import { MeshBuilder, VideoTexture, Vector3, GlowLayer, PointLight } from "@baby
 import { WaterMaterial } from "@babylonjs/materials"
 import { randomInRange } from "../../utility"
 import { MorphingMeshGenerator } from "../generators/morphing-mesh.generator"
-import { ParticleCloudGenerator } from "../generators/particle-cloud.generator"
+// import { ParticleCloudGenerator } from "../generators/particle-cloud.generator"
 import { SceneContextType } from "../types"
 
 export const onConnectionEvent = (context: SceneContextType) => {

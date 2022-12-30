@@ -1,6 +1,6 @@
 import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/inspector";
-import { Engine, Scene, Vector3, HemisphericLight, Nullable, UniversalCamera, VideoTexture, Camera, AssetsManager, GlowLayer, Mesh } from "@babylonjs/core";
+import { Engine, Scene, Vector3, HemisphericLight, Nullable, UniversalCamera, VideoTexture, Camera, AssetsManager, GlowLayer } from "@babylonjs/core";
 import { RTCConnector } from "../communication/rtc-connector";
 import { buildGUI } from "./gui";
 import { SceneContextType } from "./types";
@@ -56,7 +56,7 @@ export class AppScene {
     // const ground = MeshBuilder.CreateGround('ground', { width: 10, height: 10 }, scene)
     // ground.material = new GridMaterial('groundMaterial', scene)
 
-    const light1: HemisphericLight = new HemisphericLight("light1", new Vector3(1, 1, 0), scene)
+    new HemisphericLight("light1", new Vector3(1, 1, 0), scene)
 
     const assetManager = new AssetsManager(scene)
     assetManager.addTextureTask('loadWaterTexture', './textures/water/waterbump.png')
