@@ -29,9 +29,9 @@ controlChannel.addEventListener('message', async (ev) => {
       const controlsNode = document.getElementById('controls')
 
       await buildControlPanel(controlsNode)
-      controlChannel.postMessage({ type: 'ready' })
-
       buildAudioVisualizer(controlsNode)
+
+      controlChannel.postMessage({ type: 'ready' })
       break
     default:
       return
@@ -41,6 +41,8 @@ controlChannel.addEventListener('message', async (ev) => {
 window.addEventListener('beforeunload', () => {
   controlChannel.postMessage({ type: 'closing' })
 })
+
+controlChannel.postMessage({ type: 'created' })
 
 async function buildControlPanel(parentNode?: HTMLElement | null) {
   const hw = (window || document.defaultView) as HijackedWindow

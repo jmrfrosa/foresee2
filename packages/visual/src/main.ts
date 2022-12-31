@@ -31,23 +31,20 @@ startAppBtn.addEventListener('click', () => {
   if (!controlPanelWindow)
     throw('Failed to open controls window');
 
-  // Hackish way of creating an off-window control interface
-  // We hijack the child `window` and use it to carry heavy objects around by reference
-  (controlPanelWindow as any).globals = { audioAnalyzer, globalStore }
-
-  globalStore.set('controlPanelWindow', controlPanelWindow)
-
-  // Signal is delayed so that control panel has enough time to set up its own channel
-  setTimeout(() => {
-    controlChannel.postMessage({ type: 'ready' })
-  }, 500)
-
   controlChannel.addEventListener('message', (ev) => {
     switch(ev.data.type) {
+      case 'created':
+        // Hackish way of creating an off-window control interface
+        // We hijack the child `window` and use it to carry heavy objects around by reference
+        (controlPanelWindow as any).globals = { audioAnalyzer, globalStore }
+
+        globalStore.set('controlPanelWindow', controlPanelWindow)
+
+        controlChannel.postMessage({ type: 'ready' })
       case 'ready':
         const { globals: { controlPanel } } = controlPanelWindow as Window & ExtraWindowFields
 
-        startApp({ audioAnalyzer: controlPanel.audioAnalyzer, controls: controlPanel.controls })
+        startApp({ controlPanel })
 
         globalStore.set('controlPanel', controlPanel)
         setControlPanelEvents(controlPanel)
@@ -61,8 +58,8 @@ startAppBtn.addEventListener('click', () => {
   })
 })
 
-function startApp({ audioAnalyzer, controls }: { audioAnalyzer: AudioAnalyzer; controls: ExternalParamsType }) {
-  const canvasScene = new AppScene(comm, audioAnalyzer, controls, appNode)
+function startApp({ controlPanel }: { controlPanel: ControlPanel }) {
+  const canvasScene = new AppScene(comm, controlPanel.audioAnalyzer, controlPanel.controls, appNode)
 
   startAppBtn.disabled = true
 
