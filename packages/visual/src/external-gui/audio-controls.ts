@@ -72,7 +72,14 @@ export class AudioParamPanel {
   private async handleMediaDeviceChange(deviceId: string) {
     const remoteDevices = this.controlPanel.globalStore.get('remoteAudioDevices') as Record<string, MediaStream>
     const selectedAudioDevice = remoteDevices?.[deviceId] ??
-      await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: deviceId } } })
+      await navigator.mediaDevices.getUserMedia(
+        {
+          audio: {
+            deviceId: { exact: deviceId },
+            sampleRate: AudioAnalyzer.defaultSampleRate
+          }
+        }
+      )
 
     this.audioAnalyzer.swapDevice(selectedAudioDevice)
   }

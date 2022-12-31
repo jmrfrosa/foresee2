@@ -34,7 +34,7 @@ export class RTCConnector {
     this.messageSource.addEventListener('ice', this.handleICE.bind(this))
   }
 
-  getPeerId(rtc: RTCPeerConnection) {
+  getPeerId(rtc: RTCPeerConnection): string | undefined {
     for (const [peerId, conn] of this.pcs) {
       if (conn === rtc) return peerId
     }

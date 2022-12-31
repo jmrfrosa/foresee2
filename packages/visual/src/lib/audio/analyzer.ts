@@ -4,6 +4,8 @@ type AudioAnalyzerOptions = {
 }
 
 export class AudioAnalyzer {
+  static defaultSampleRate = 48000
+
   audioDevice?: MediaStream | null
   context?: AudioContext | null
   analyzer?: AnalyserNode | null
@@ -14,14 +16,21 @@ export class AudioAnalyzer {
   constructor(audioDevice: MediaStream, options?: AudioAnalyzerOptions) {
     this.audioDevice = audioDevice
 
-    this.buildAnalyzer(options)
+    this.buildAnalyzer({
+      ...options,
+      context: {
+        ...(options?.context || {}),
+        ...this.matchSampleRate()
+      }
+    })
+
     this.assignDeviceToSource()
 
     this.startAnalysis()
   }
 
   static async create() {
-    const defaultAudioDevice = await navigator.mediaDevices.getUserMedia({ audio: true })
+    const defaultAudioDevice = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: this.defaultSampleRate } })
 
     const mediaDeviceList = (await navigator.mediaDevices.enumerateDevices())
       .filter(device => device.kind === 'audioinput')
@@ -56,7 +65,7 @@ export class AudioAnalyzer {
     this.context = null
     this.audioDevice = newAudioDevice
 
-    const { analyzer } = this.buildAnalyzer()
+    const { analyzer } = this.buildAnalyzer({ context: this.matchSampleRate() })
 
     analyzer.fftSize = previousfftSize
 
@@ -77,5 +86,14 @@ export class AudioAnalyzer {
 
     this.source = this.context.createMediaStreamSource(this.audioDevice)
     this.source?.connect(this.analyzer)
+  }
+
+  private matchSampleRate() {
+    if (!this.audioDevice) throw('Missing audio device')
+
+    const [track] = this.audioDevice.getAudioTracks()
+    const trackSampleRate = track.getSettings().sampleRate
+
+    return { sampleRate: trackSampleRate ?? AudioAnalyzer.defaultSampleRate }
   }
 }

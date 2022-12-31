@@ -20,6 +20,7 @@ startAppBtn.textContent = 'Start Application'
 controlsNode?.appendChild(startAppBtn)
 
 const audioAnalyzer = await AudioAnalyzer.create()
+globalStore.set('audioAnalyzer', audioAnalyzer)
 
 // We set up a broadcast channel to signal messages to and from the control panel window
 const controlChannel = new BroadcastChannel('controlBroadcast')
