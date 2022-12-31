@@ -40,7 +40,7 @@ startAppBtn.addEventListener('click', () => {
   // Signal is delayed so that control panel has enough time to set up its own channel
   setTimeout(() => {
     controlChannel.postMessage({ type: 'ready' })
-  }, 200)
+  }, 500)
 
   controlChannel.addEventListener('message', (ev) => {
     switch(ev.data.type) {
