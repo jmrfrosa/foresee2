@@ -72,6 +72,16 @@ export class AudioAnalyzer {
     this.startAnalysis()
   }
 
+  averageInRange([rangeStart, rangeEnd]: [rangeStart: number, rangeEnd: number]) {
+    if (rangeEnd <= rangeStart)
+      return 0
+
+    const beatScoreSum = this.audioData?.subarray(rangeStart, rangeEnd)?.reduce((sum, n) => sum + n)
+    const beatScore = beatScoreSum && (beatScoreSum / (rangeEnd - rangeStart)) || 0
+
+    return beatScore
+  }
+
   private buildAnalyzer(options?: AudioAnalyzerOptions) {
     this.context = new AudioContext(options?.context)
     this.analyzer = new AnalyserNode(this.context, options?.analyzer)

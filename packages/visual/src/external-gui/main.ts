@@ -37,7 +37,7 @@ export class ControlPanel extends EventTarget {
     this.panels.audioPanel.build()
 
     addBlendingParams(this.gui, this.controls)
-    addDeformParams(this.gui, this.controls)
+    addDeformParams(this.gui, this.controls, this)
     addSceneParams(this.gui, this.controls, this)
   }
 

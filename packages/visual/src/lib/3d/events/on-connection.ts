@@ -6,7 +6,7 @@ import { MorphingMeshGenerator } from "../generators/morphing-mesh.generator"
 import { SceneContextType } from "../types"
 
 export const onConnectionEvent = (context: SceneContextType) => {
-  const { scene, comm, peers } = context
+  const { scene, comm, peers, externalParams: { meshDeformParams } } = context
 
   return async (pc: RTCPeerConnection) => {
     const peerId = comm.getPeerId(pc)
@@ -34,7 +34,14 @@ export const onConnectionEvent = (context: SceneContextType) => {
     //   updatable: true
     // }, scene)
 
-    mesh.setPositionWithLocalVector(new Vector3(randomInRange(-1,1), randomInRange(1,2), randomInRange(0,6)))
+    mesh.setPositionWithLocalVector(
+      new Vector3(
+        randomInRange(-meshDeformParams.xWebcamRange, -meshDeformParams.xWebcamRange),
+        randomInRange(1, -meshDeformParams.yWebcamRange),
+        randomInRange(-meshDeformParams.zWebcamRange, -meshDeformParams.zWebcamRange)
+      )
+    )
+
     mesh.billboardMode = 7
     peerObjects.push(mesh)
 

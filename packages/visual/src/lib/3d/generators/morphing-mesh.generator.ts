@@ -3,23 +3,32 @@ import { BaseTransformGenerator } from "./base.generator";
 
 export class MorphingMeshGenerator extends BaseTransformGenerator {
   generate() {
+    const { externalParams: { meshDeformParams, sceneParams } } = this.context
     const audioDataTexture = this.buildAudioTexture()
     const webcamShaderMaterial = this.buildWebcamShader(audioDataTexture)
 
     this.baseMesh.material = webcamShaderMaterial
+    const initialMeshPos = this.baseMesh.position.clone()
 
     let time = 0
     const beforeRender = () => {
       time += this.context.scene.deltaTime
 
-      webcamShaderMaterial.setFloat("time", time * this.context.externalParams.sceneParams.timeFactor)
-      webcamShaderMaterial.setFloat("xVertexDeformIntensity", this.context.externalParams.meshDeformParams.xVertexDeformIntensity)
-      webcamShaderMaterial.setFloat("yVertexDeformIntensity", this.context.externalParams.meshDeformParams.yVertexDeformIntensity)
-      webcamShaderMaterial.setFloat("zVertexDeformIntensity", this.context.externalParams.meshDeformParams.zVertexDeformIntensity)
-      webcamShaderMaterial.setFloat("offsetModulatorIntensity", this.context.externalParams.meshDeformParams.offsetModulatorIntensity)
-      webcamShaderMaterial.setFloat("offsetShakerIntensity", this.context.externalParams.meshDeformParams.offsetShakerIntensity)
+      webcamShaderMaterial.setFloat("time", time * sceneParams.timeFactor)
+      webcamShaderMaterial.setFloat("xVertexDeformIntensity", meshDeformParams.xVertexDeformIntensity)
+      webcamShaderMaterial.setFloat("yVertexDeformIntensity", meshDeformParams.yVertexDeformIntensity)
+      webcamShaderMaterial.setFloat("zVertexDeformIntensity", meshDeformParams.zVertexDeformIntensity)
+      webcamShaderMaterial.setFloat("offsetModulatorIntensity", meshDeformParams.offsetModulatorIntensity)
+      webcamShaderMaterial.setFloat("offsetShakerIntensity", meshDeformParams.offsetShakerIntensity)
       webcamShaderMaterial.setVector3("cameraPosition", this.context.scene.activeCamera?.position ?? Vector3.Zero())
       audioDataTexture.update(this.context.audioAnalyzer.audioData as Uint8Array)
+
+      this.baseMesh.scaling.x = meshDeformParams.webcamScale
+      this.baseMesh.scaling.y = meshDeformParams.webcamScale
+      this.baseMesh.scaling.z = meshDeformParams.webcamScale
+      this.baseMesh.position.x = initialMeshPos.x + meshDeformParams.xWebcamOffset
+      this.baseMesh.position.y = initialMeshPos.y + meshDeformParams.yWebcamOffset
+      this.baseMesh.position.z = initialMeshPos.z + meshDeformParams.zWebcamOffset
     }
 
     this.context.scene.registerBeforeRender(beforeRender)

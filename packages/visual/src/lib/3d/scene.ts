@@ -1,6 +1,6 @@
 import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/inspector";
-import { Engine, Scene, Vector3, HemisphericLight, Nullable, UniversalCamera, VideoTexture, Camera, AssetsManager, GlowLayer } from "@babylonjs/core";
+import { Engine, Scene, Vector3, HemisphericLight, Nullable, UniversalCamera, VideoTexture, Camera, AssetsManager, GlowLayer, ArcRotateCamera } from "@babylonjs/core";
 import { RTCConnector } from "../communication/rtc-connector";
 import { buildGUI } from "./gui";
 import { SceneContextType } from "./types";
@@ -16,11 +16,14 @@ export class AppScene {
   engine: Engine
   mainScene: Scene
   mainCamera: Camera
+  freeCamera: UniversalCamera
+  autoRotateCamera: ArcRotateCamera
   displayVideo?: VideoTexture
   sceneBuilders?: {
     skybox: SkyBuilder
     water: WaterBuilder
   }
+  peerObjects?: Map<string, { video: HTMLVideoElement, objects: unknown[] }>
 
   constructor(comm: RTCConnector, audioAnalyzer: AudioAnalyzer, externalParams: ExternalParamsType, rootNode?: Nullable<HTMLElement>) {
     // create the canvas html element and attach it to the webpage
@@ -41,29 +44,32 @@ export class AppScene {
     this.mainScene = scene
     this.engine = engine
 
-    const camera = new UniversalCamera("Camera", new Vector3(0, 1, -5), scene)
-    camera.attachControl(canvas, true)
-    camera.speed = 0.2
+    const freeCamera = new UniversalCamera("FreeCamera", new Vector3(0, 1, -5), scene)
+    freeCamera.attachControl(canvas, true)
+    freeCamera.speed = 0.2
 
     // WASD
-    camera.keysUp.push(87)
-    camera.keysDown.push(83)
-    camera.keysRight.push(68)
-    camera.keysLeft.push(65)
+    freeCamera.keysUp.push(87)
+    freeCamera.keysDown.push(83)
+    freeCamera.keysRight.push(68)
+    freeCamera.keysLeft.push(65)
 
-    this.mainCamera = camera
+    this.mainCamera = freeCamera
+    this.freeCamera = freeCamera
+    this.autoRotateCamera = new ArcRotateCamera("AutoRotateCamera", 3 * Math.PI / 2, Math.PI / 8, 50, Vector3.Zero(), scene)
+    this.autoRotateCamera.useAutoRotationBehavior = true
 
     // const ground = MeshBuilder.CreateGround('ground', { width: 10, height: 10 }, scene)
     // ground.material = new GridMaterial('groundMaterial', scene)
 
     new HemisphericLight("light1", new Vector3(1, 1, 0), scene)
 
+    const peers = new Map<string, { video: HTMLVideoElement, objects: unknown[] }>()
+    this.peerObjects = peers
+
     const assetManager = new AssetsManager(scene)
     assetManager.addTextureTask('loadWaterTexture', './textures/water/waterbump.png')
-
     assetManager.onTaskSuccessObservable.add((_tasks) => {
-      const peers = new Map<string, { video: HTMLVideoElement, objects: unknown[] }>()
-
       const GUI = buildGUI(scene)
 
       GUI.fullScreenToggle.onPointerUpObservable.add(() => { engine.switchFullscreen(false) })
@@ -106,6 +112,13 @@ export class AppScene {
 
         // run the main render loop
         engine.runRenderLoop(() => {
+          const fftIntensity = audioAnalyzer.averageInRange([
+            externalParams.meshDeformParams.cameraBeatRangeStart,
+            externalParams.meshDeformParams.cameraBeatRangeEnd
+          ]) * externalParams.meshDeformParams.cameraBeatDeformIntensity
+
+          this.mainCamera.fov = (externalParams.meshDeformParams.cameraFov * fftIntensity) || 0.8
+
           scene.render()
         }
       );
@@ -145,5 +158,20 @@ export class AppScene {
     if (!newMesh) return
 
     this.sceneBuilders?.water.addMeshReflection(newMesh)
+  }
+
+  switchCamera() {
+    if (this.mainCamera.name === 'FreeCamera') {
+      this.mainCamera = this.autoRotateCamera;
+      (this.mainCamera as ArcRotateCamera).position = this.freeCamera.position.clone();
+      (this.mainCamera as ArcRotateCamera).rotation = this.freeCamera.rotation.clone();
+    } else {
+      this.mainCamera = this.freeCamera;
+      (this.mainCamera as UniversalCamera).position = this.autoRotateCamera.position.clone();
+      (this.mainCamera as UniversalCamera).rotation = this.autoRotateCamera.rotation.clone();
+    }
+
+    this.mainCamera.attachControl()
+    this.mainScene.activeCamera = this.mainCamera
   }
 }

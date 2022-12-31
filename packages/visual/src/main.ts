@@ -94,4 +94,13 @@ function setControlPanelEvents(controlPanel: ControlPanel) {
 
     scene.swapSkybox(newSkybox)
   })
+
+  controlPanel.addEventListener('cameraAutoRotate', (_ev) => {
+    const scene = globalStore.get('appScene') as AppScene
+
+    if (!scene)
+      throw('Cannot change skybox, scene was not found')
+
+    scene.switchCamera()
+  })
 }
