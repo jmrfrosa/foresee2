@@ -43,5 +43,11 @@ export type ExternalParamsType = {
     timeFactor: number
     shareScreen: () => void
     skybox: SkyboxTypes
+    skyboxRenderStepsMain: number
+    skyboxRenderStepsSecondary: number
+    skyboxHeight: number
+    skyboxCloudFactor: number
+    skyboxHaze: number
+    skyboxStarTreshold: number
   }
 }

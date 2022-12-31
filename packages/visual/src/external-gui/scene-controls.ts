@@ -10,6 +10,12 @@ export const addSceneParams = (gui: GUI, params: Partial<ExternalParamsType>, co
       controlPanel.dispatchEvent(new Event('shareScreen'))
     },
     skybox: SkyboxTypes.SIMPLE,
+    skyboxRenderStepsMain: 16,
+    skyboxRenderStepsSecondary: 16,
+    skyboxHeight: 500,
+    skyboxCloudFactor: 0.6,
+    skyboxHaze: 0.5,
+    skyboxStarTreshold: 0.99,
   }
 
   params['sceneParams'] = sceneParams
@@ -23,4 +29,12 @@ export const addSceneParams = (gui: GUI, params: Partial<ExternalParamsType>, co
       controlPanel.dispatchEvent(new CustomEvent('skyboxChange', { detail: { value } }))
   })
   sceneControlsFolder.open()
+
+  const skyboxControlsFolder = gui.addFolder('Complex Skybox Parameters')
+  skyboxControlsFolder.add(params.sceneParams, 'skyboxRenderStepsMain', 1, 100, 1)
+  skyboxControlsFolder.add(params.sceneParams, 'skyboxRenderStepsSecondary', 1, 100, 1)
+  skyboxControlsFolder.add(params.sceneParams, 'skyboxHeight', 0, 3000, 1)
+  skyboxControlsFolder.add(params.sceneParams, 'skyboxCloudFactor', 0, 2, 0.001)
+  skyboxControlsFolder.add(params.sceneParams, 'skyboxHaze', 0, 2, 0.001)
+  skyboxControlsFolder.add(params.sceneParams, 'skyboxStarTreshold', 0, 1, 0.001)
 }

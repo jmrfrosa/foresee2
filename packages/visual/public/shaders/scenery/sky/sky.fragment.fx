@@ -47,23 +47,23 @@ uniform float time;
 
 float moonx = 1.0;
 float moony = 9.6;
-float cloudy = 0.6;
-float height = 500.0;
+uniform float cloudy;
+uniform float height;
 
 //rendering quality
-const int steps = 16; //16 is fast, 128 or 256 is extreme high
-const int stepss = 16; //16 is fast, 16 or 32 is high
+uniform int steps; //16 is fast, 128 or 256 is extreme high
+uniform int stepss; //16 is fast, 16 or 32 is high
 
 //float t = 12.0; //fix time. 12.0 91.0, 97.0, 188.0, 72.0, 74.0
 
 float camroty = 0. * DEGRAD; //20.
-float haze = 0.5; //0.2
+uniform float haze; //0.2 - 0.5
 float cloudyhigh = 0.05; //if cloud2 defined
 
 float cloudnear = 1.0; //9e3 12e3  //do not render too close clouds on the zenith
 float cloudfar = 1e3; //15e3 17e3
 
-float startreshold = 0.99; //0.99 0.98 star density treshold.
+uniform float startreshold; //0.99 0.98 star density treshold.
 
 const float I = 10.; //sun light power, 10.0 is normal
 const float g = 0.45; //light concentration .76 //.45 //.6  .45 is normaL

@@ -40,6 +40,12 @@ export class SkyBuilder extends BaseBuilder {
         skyGeneratorShaderMaterial.setFloat('time', t)
         skyGeneratorShaderMaterial.setFloat('suny', Math.sin(t * 0.00001))
         skyGeneratorShaderMaterial.setFloat('sunx', Math.sin(t * 0.00001))
+        skyGeneratorShaderMaterial.setInt('steps', this.context.externalParams.sceneParams.skyboxRenderStepsMain)
+        skyGeneratorShaderMaterial.setInt('stepss', this.context.externalParams.sceneParams.skyboxRenderStepsSecondary)
+        skyGeneratorShaderMaterial.setFloat('height', this.context.externalParams.sceneParams.skyboxHeight)
+        skyGeneratorShaderMaterial.setFloat('cloudy', this.context.externalParams.sceneParams.skyboxCloudFactor)
+        skyGeneratorShaderMaterial.setFloat('haze', this.context.externalParams.sceneParams.skyboxHaze)
+        skyGeneratorShaderMaterial.setFloat('startreshold', this.context.externalParams.sceneParams.skyboxStarTreshold)
 
         time += this.context.scene.deltaTime
       }
