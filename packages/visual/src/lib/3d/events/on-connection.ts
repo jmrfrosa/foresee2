@@ -1,4 +1,4 @@
-import { MeshBuilder, VideoTexture, Vector3, GlowLayer, PointLight } from "@babylonjs/core"
+import { MeshBuilder, VideoTexture, Vector3, GlowLayer, PointLight, Texture, Camera } from "@babylonjs/core"
 import { WaterMaterial } from "@babylonjs/materials"
 import { randomInRange } from "../../utility"
 import { MorphingMeshGenerator } from "../generators/morphing-mesh.generator"
@@ -6,7 +6,7 @@ import { MorphingMeshGenerator } from "../generators/morphing-mesh.generator"
 import { SceneContextType } from "../types"
 
 export const onConnectionEvent = (context: SceneContextType) => {
-  const { scene, comm, peers, externalParams: { meshDeformParams } } = context
+  const { scene, comm, peers } = context
 
   return async (pc: RTCPeerConnection) => {
     const peerId = comm.getPeerId(pc)
@@ -17,32 +17,12 @@ export const onConnectionEvent = (context: SceneContextType) => {
 
     if (!peerVideo) return
 
-    const { videoHeight, videoWidth } = peerVideo
+    // const { videoHeight, videoWidth } = peerVideo
     const webcamTexture = new VideoTexture('webcam', peerVideo, scene)
 
     const peerSeed = generatePeerSeed()
 
-    const mesh = MeshBuilder.CreatePlane(`baseMesh-${peerId}`, {
-      height: videoHeight,
-      width: videoWidth,
-      updatable: true
-    }, scene);
-
-    // const mesh = MeshBuilder.CreateBox(`baseMesh-${peerId}`, {
-    //   height: videoHeight,
-    //   width: videoWidth,
-    //   updatable: true
-    // }, scene)
-
-    mesh.setPositionWithLocalVector(
-      new Vector3(
-        randomInRange(-meshDeformParams.xWebcamRange, -meshDeformParams.xWebcamRange),
-        randomInRange(1, -meshDeformParams.yWebcamRange),
-        randomInRange(-meshDeformParams.zWebcamRange, -meshDeformParams.zWebcamRange)
-      )
-    )
-
-    mesh.billboardMode = 7
+    const mesh = createPeerMesh(webcamTexture, peerId, context)
     peerObjects.push(mesh)
 
     const extraData = { peerObjects, peerSeed, webcamTexture, peerId }
@@ -50,8 +30,8 @@ export const onConnectionEvent = (context: SceneContextType) => {
     // const transformMeshIntoParticleCloud = new ParticleCloudGenerator(plane, context, extraData)
     // const { beforeRender, objects } = await transformMeshIntoParticleCloud.generate()
 
-    const light = new PointLight(`light-${peerId}`, mesh.position, scene)
-    light.parent = mesh
+    // const light = new PointLight(`light-${peerId}`, mesh.position, scene)
+    // light.parent = mesh
 
     const morphMesh = new MorphingMeshGenerator(mesh, context, extraData)
     const { beforeRender } = morphMesh.generate();
@@ -64,3 +44,26 @@ export const onConnectionEvent = (context: SceneContextType) => {
 }
 
 const generatePeerSeed = () => randomInRange(0, 100)
+
+export const createPeerMesh = (texture: Texture, uniqueId: string, context: SceneContextType) => {
+  const { meshDeformParams } = context.externalParams
+  const cameraPos = (context.scene.activeCamera as Camera).position
+
+  const mesh = MeshBuilder.CreatePlane(`peerMesh-${uniqueId}`, {
+    height: texture.uScale,
+    width: texture.vScale,
+    updatable: true
+  }, context.scene)
+
+  const meshAngle = randomInRange(0, Math.PI)
+
+  const xPos = (cameraPos.x + meshDeformParams.webcamRadius) * Math.cos(meshAngle)
+  const yPos = randomInRange(1, cameraPos.y + meshDeformParams.yWebcamRange)
+  const zPos = (cameraPos.z + meshDeformParams.webcamRadius) * Math.sin(meshAngle)
+
+  mesh.setPositionWithLocalVector(new Vector3(xPos, yPos,zPos))
+  mesh.parent = context.scene.activeCamera
+  mesh.billboardMode = 7
+
+  return mesh
+}

@@ -3,13 +3,12 @@ import { ControlPanel } from './main'
 import { ExternalParamsType } from './types'
 
 export const meshDeformParams = {
-  xWebcamRange: 10,
   yWebcamRange: 5,
-  zWebcamRange: 3,
   xWebcamOffset: 0.0,
   yWebcamOffset: 0.0,
   zWebcamOffset: 0.0,
   webcamScale: 1.0,
+  webcamRadius: 10.0,
 
   xVertexDeformIntensity: 0.0,
   yVertexDeformIntensity: 0.0,
@@ -37,13 +36,12 @@ export const addDeformParams = (gui: GUI, params: Partial<ExternalParamsType>, c
   params['meshDeformParams'] = meshDeformParams
 
   const webcamControlsFolder = gui.addFolder('webcamControls')
-  webcamControlsFolder.add(params.meshDeformParams, 'xWebcamRange', 0, 100, 0.1)
   webcamControlsFolder.add(params.meshDeformParams, 'yWebcamRange', 0, 10, 0.1)
-  webcamControlsFolder.add(params.meshDeformParams, 'zWebcamRange', 0, 100, 0.1)
   webcamControlsFolder.add(params.meshDeformParams, 'xWebcamOffset', 0, 100, 0.01)
   webcamControlsFolder.add(params.meshDeformParams, 'yWebcamOffset', 0, 100, 0.01)
   webcamControlsFolder.add(params.meshDeformParams, 'zWebcamOffset', 0, 100, 0.01)
   webcamControlsFolder.add(params.meshDeformParams, 'webcamScale', 0, 50, 0.01)
+  webcamControlsFolder.add(params.meshDeformParams, 'webcamRadius', 10, 300, 0.1)
   webcamControlsFolder.open()
 
   const waterControlsFolder = gui.addFolder('waterControls')

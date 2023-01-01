@@ -13,10 +13,9 @@ export type ExternalParamsType = {
     wetBlendFactor: number
   },
   meshDeformParams: {
-    xWebcamRange: number
     yWebcamRange: number
-    zWebcamRange: number
     webcamScale: number
+    webcamRadius: number
     xWebcamOffset: number
     yWebcamOffset: number
     zWebcamOffset: number
