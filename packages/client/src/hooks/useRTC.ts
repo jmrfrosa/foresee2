@@ -66,6 +66,8 @@ export const useRTC = () => {
       pc.addEventListener('connectionstatechange', handleStateChange)
       pc.addEventListener('signalingstatechange', handleSignalingChange)
 
+      initDataChannel()
+
       console.log('Events bound and ready to start')
     }
 
@@ -79,7 +81,6 @@ export const useRTC = () => {
   const initialize = async (initialStream: MediaStream) => {
     if (pc?.connectionState !== 'connected') close()
 
-    console.log('INITIALIZING PC WITH ICE CONFIG:', ICE_CONFIG)
     setPc(new RTCPeerConnection({ ...ICE_CONFIG }))
     setMediaStream(initialStream)
   }
@@ -172,7 +173,6 @@ export const useRTC = () => {
     switch(pc.connectionState) {
       case 'connected':
         messageSource?.close()
-        initDataChannel()
         break
       case 'closed':
         close(peerConnection)
